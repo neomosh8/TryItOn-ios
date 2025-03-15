@@ -1,11 +1,3 @@
-//
-//  AddItemView.swift
-//  TryItOn
-//
-//  Created by Mojtaba Rabiei on 2025-03-15.
-//
-
-
 import SwiftUI
 
 struct AddItemView: View {
@@ -16,8 +8,9 @@ struct AddItemView: View {
     @State private var selectedImage: UIImage?
     @State private var itemName = ""
     @State private var itemCategory: ItemCategory = .clothing
-    @State private var isShowingCategoryPicker = false
     @State private var showCameraOptions = false
+    @State private var showSuccessAlert = false
+    @State private var alertMessage = ""
     
     var body: some View {
         NavigationView {
@@ -51,9 +44,14 @@ struct AddItemView: View {
                                 .cornerRadius(8)
                             
                             Button(action: {
-                                dataManager.tryOnFromImage(image: image)
-                                selectedImage = nil
-                                itemName = ""
+                                dataManager.uploadItemFromImage(image: image, category: itemCategory) { success, message in
+                                    self.alertMessage = message
+                                    self.showSuccessAlert = true
+                                    if success {
+                                        selectedImage = nil
+                                        itemName = ""
+                                    }
+                                }
                             }) {
                                 Text("Upload Item")
                                     .foregroundColor(.white)
@@ -87,9 +85,14 @@ struct AddItemView: View {
                     
                     Button(action: {
                         if !urlString.isEmpty {
-                            dataManager.tryOnFromURL(url: urlString)
-                            urlString = ""
-                            itemName = ""
+                            dataManager.uploadItemFromURL(url: urlString, category: itemCategory) { success, message in
+                                self.alertMessage = message
+                                self.showSuccessAlert = true
+                                if success {
+                                    urlString = ""
+                                    itemName = ""
+                                }
+                            }
                         }
                     }) {
                         Text("Upload from URL")
@@ -145,13 +148,17 @@ struct AddItemView: View {
                     ]
                 )
             }
+            .alert(isPresented: $showSuccessAlert) {
+                Alert(
+                    title: Text("Item Upload"),
+                    message: Text(alertMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+            .onAppear {
+                // Fetch existing items when view appears
+                dataManager.fetchItems()
+            }
         }
-    }
-}
-
-struct AddItemView_Previews: PreviewProvider {
-    static var previews: some View {
-        AddItemView()
-            .environmentObject(DataManager())
     }
 }

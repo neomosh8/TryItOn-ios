@@ -10,18 +10,20 @@ struct FittingRoomView: View {
     @State private var lastScale: CGFloat = 1.0
     @State private var offset = CGSize.zero
     @State private var lastOffset = CGSize.zero
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
     
     var body: some View {
         VStack {
             // Top slider - User uploaded items
-            if dataManager.results.isEmpty {
+            if dataManager.items.isEmpty {
                 Text("No items uploaded yet")
                     .font(.headline)
                     .padding()
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 15) {
-                        ForEach(Array(dataManager.results.enumerated()), id: \.element.id) { index, item in
+                        ForEach(Array(dataManager.items.enumerated()), id: \.element.id) { index, item in
                             ItemThumbnail(item: item, isSelected: index == selectedItemIndex)
                                 .onTapGesture {
                                     selectedItemIndex = index
@@ -73,10 +75,10 @@ struct FittingRoomView: View {
                                 }
                         )
                         .onTapGesture(count: 2) {
-                                    self.scale = 1.0
-                                    self.offset = .zero
-                                    self.lastOffset = .zero
-                                }
+                            self.scale = 1.0
+                            self.offset = .zero
+                            self.lastOffset = .zero
+                        }
                 } else {
                     VStack {
                         Image(systemName: "tshirt")
@@ -125,13 +127,13 @@ struct FittingRoomView: View {
                         .padding()
                         .frame(minWidth: 120)
                         .background(
-                            dataManager.results.isEmpty || dataManager.templates.isEmpty
+                            dataManager.items.isEmpty || dataManager.templates.isEmpty
                                 ? Color.gray
                                 : Color.blue
                         )
                         .cornerRadius(8)
                 }
-                .disabled(dataManager.results.isEmpty || dataManager.templates.isEmpty)
+                .disabled(dataManager.items.isEmpty || dataManager.templates.isEmpty)
                 
                 if currentResult != nil {
                     Button(action: {
@@ -151,19 +153,27 @@ struct FittingRoomView: View {
         .navigationTitle("Fitting Room")
         .onAppear {
             dataManager.fetchTemplates()
+            dataManager.fetchItems()
             dataManager.fetchResults()
+        }
+        .alert(isPresented: $showErrorAlert) {
+            Alert(
+                title: Text("Error"),
+                message: Text(errorMessage),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
     
     private func tryItOn() {
-        guard !dataManager.results.isEmpty && !dataManager.templates.isEmpty else { return }
+        guard !dataManager.items.isEmpty && !dataManager.templates.isEmpty else { return }
         
         isLoading = true
         
-        let selectedItem = dataManager.results[selectedItemIndex]
+        let selectedItem = dataManager.items[selectedItemIndex]
         let selectedTemplate = dataManager.templates[selectedTemplateIndex]
         
-        dataManager.tryOnWithTemplate(
+        dataManager.tryOnItemWithTemplate(
             itemId: selectedItem.id,
             templateId: selectedTemplate.id,
             completion: { result in
@@ -174,6 +184,8 @@ struct FittingRoomView: View {
                     self.currentResult = image
                 case .failure(let error):
                     print("Error: \(error.localizedDescription)")
+                    self.errorMessage = error.localizedDescription
+                    self.showErrorAlert = true
                 }
             }
         )
@@ -192,7 +204,7 @@ struct FittingRoomView: View {
 
 // Item thumbnail for the top slider
 struct ItemThumbnail: View {
-    let item: TryOnResult
+    let item: Item
     let isSelected: Bool
     
     var body: some View {
@@ -223,7 +235,7 @@ struct ItemThumbnail: View {
                     )
             }
             
-            Text(item.item_category.capitalized)
+            Text(item.category.capitalized)
                 .font(.caption)
                 .lineLimit(1)
         }

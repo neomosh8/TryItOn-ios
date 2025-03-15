@@ -53,3 +53,19 @@ struct ShopItem {
     let storeURL: URL
 }
 
+struct Item: Identifiable, Codable {
+    let id: Int
+    let filename: String
+    let category: String
+    
+    var imageURL: URL? {
+        URL(string: "\(APIConfig.baseURL)/images/items/\(filename)")
+    }
+}
+
+struct ItemResponse: Codable {
+    let id: Int
+    let filename: String
+    let category: String
+}
+
