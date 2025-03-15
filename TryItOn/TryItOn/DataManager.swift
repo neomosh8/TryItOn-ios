@@ -462,6 +462,9 @@ class DataManager: ObservableObject {
                             return
                         }
                         
+                        // Get the category for the template
+                        let category = self?.templates.first(where: { $0.id == templateId })?.category ?? "general"
+                        
                         // Download the result image
                         URLSession.shared.dataTask(with: url) { data, response, error in
                             DispatchQueue.main.async {
@@ -475,10 +478,16 @@ class DataManager: ObservableObject {
                                     return
                                 }
                                 
+                                // First return the image for immediate display
+                                completion(.success(image))
+                                
                                 // Update results after trying on
                                 self?.fetchResults()
                                 
-                                completion(.success(image))
+                                // Now also save this result as a new template
+                                self?.saveResultAsTemplate(image: image, category: category) { _ in
+                                    // Templates list will be updated automatically in saveResultAsTemplate
+                                }
                             }
                         }.resume()
                     } catch {
@@ -550,7 +559,72 @@ class DataManager: ObservableObject {
             }
         }.resume()
     }
-    
+    func saveResultAsTemplate(image: UIImage, category: String, completion: @escaping (Template?) -> Void) {
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            completion(nil)
+            return
+        }
+        
+        isLoading = true
+        let url = URL(string: "\(APIConfig.baseURL)/templates/")!
+        
+        // Create form data
+        let boundary = UUID().uuidString
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.allHTTPHeaderFields = APIConfig.authHeader(username: getUsername())
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var formData = Data()
+        
+        // Add image data
+        formData.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+        formData.append("Content-Disposition: form-data; name=\"file\"; filename=\"result_template.jpg\"\r\n".data(using: .utf8)!)
+        formData.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        formData.append(imageData)
+        
+        // Add category
+        formData.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+        formData.append("Content-Disposition: form-data; name=\"category\"\r\n\r\n".data(using: .utf8)!)
+        formData.append(category.data(using: .utf8)!)
+        
+        // End form data
+        formData.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = formData
+        
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                
+                if let error = error {
+                    print("Error saving result as template: \(error.localizedDescription)")
+                    completion(nil)
+                    return
+                }
+                
+                if let data = data {
+                    do {
+                        let template = try JSONDecoder().decode(Template.self, from: data)
+                        self?.templates.insert(template, at: 0) // Add to beginning of the list
+                        print("Result saved as template successfully: ID \(template.id)")
+                        completion(template)
+                    } catch {
+                        print("Failed to parse response: \(error)")
+                        if let responseStr = String(data: data, encoding: .utf8) {
+                            print("Raw response: \(responseStr)")
+                        }
+                        completion(nil)
+                    }
+                } else {
+                    completion(nil)
+                }
+            }
+        }
+        
+        task.resume()
+    }
+
     // MARK: - Helper Structs
     
     struct Response: Codable {

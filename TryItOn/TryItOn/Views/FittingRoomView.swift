@@ -12,6 +12,7 @@ struct FittingRoomView: View {
     @State private var lastOffset = CGSize.zero
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
+    @State private var shouldSelectFirstTemplate = false
     
     var body: some View {
         VStack {
@@ -115,6 +116,14 @@ struct FittingRoomView: View {
                 }
                 .frame(height: 100)
                 .padding(.vertical)
+                .onChange(of: dataManager.templates.count) { newCount, oldCount in
+                    // If templates count increased and we should select first template,
+                    // select the first template (which is the newly added result)
+                    if shouldSelectFirstTemplate && newCount > oldCount {
+                        selectedTemplateIndex = 0
+                        shouldSelectFirstTemplate = false
+                    }
+                }
             }
             
             // Action buttons
@@ -173,6 +182,9 @@ struct FittingRoomView: View {
         let selectedItem = dataManager.items[selectedItemIndex]
         let selectedTemplate = dataManager.templates[selectedTemplateIndex]
         
+        // Set flag to select first template when templates are updated
+        shouldSelectFirstTemplate = true
+        
         dataManager.tryOnItemWithTemplate(
             itemId: selectedItem.id,
             templateId: selectedTemplate.id,
@@ -186,6 +198,8 @@ struct FittingRoomView: View {
                     print("Error: \(error.localizedDescription)")
                     self.errorMessage = error.localizedDescription
                     self.showErrorAlert = true
+                    // Reset the flag if there was an error
+                    shouldSelectFirstTemplate = false
                 }
             }
         )
