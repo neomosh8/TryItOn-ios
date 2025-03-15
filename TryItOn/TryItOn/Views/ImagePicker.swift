@@ -1,6 +1,6 @@
 import SwiftUI
+import UIKit
 
-// Image Picker Helper
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
     var sourceType: UIImagePickerController.SourceType
@@ -29,12 +29,18 @@ struct ImagePicker: UIViewControllerRepresentable {
         
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let image = info[.originalImage] as? UIImage {
-                parent.selectedImage = image
+                print("Image selected: \(image.size.width) x \(image.size.height)")
+                DispatchQueue.main.async {
+                    self.parent.selectedImage = image
+                }
+            } else {
+                print("No image found in selection")
             }
             parent.presentationMode.wrappedValue.dismiss()
         }
         
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            print("Image picker cancelled")
             parent.presentationMode.wrappedValue.dismiss()
         }
     }

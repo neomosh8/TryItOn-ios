@@ -15,7 +15,7 @@ struct Template: Identifiable, Codable {
     let category: String
     
     var imageURL: URL? {
-        URL(string: "\(APIConfig.baseURL)/templates/\(filename)")
+        URL(string: "\(APIConfig.baseURL)/images/templates/\(filename)")
     }
 }
 
@@ -53,12 +53,3 @@ struct ShopItem {
     let storeURL: URL
 }
 
-// MARK: - API Configuration
-
-struct APIConfig {
-    static let baseURL = "http://your-api-server:8000" // Replace with your actual API URL
-    
-    static func authHeader(username: String) -> [String: String] {
-        return ["username": username]
-    }
-}

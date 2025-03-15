@@ -1,6 +1,5 @@
 import SwiftUI
 
-// Templates View
 struct TemplatesView: View {
     @EnvironmentObject var dataManager: DataManager
     @State private var isShowingImagePicker = false
@@ -8,6 +7,8 @@ struct TemplatesView: View {
     @State private var selectedImage: UIImage?
     @State private var selectedCategory: ItemCategory = .general
     @State private var isShowingCategoryPicker = false
+    @State private var showAlert = false
+    @State private var alertMessage = ""
     
     var body: some View {
         NavigationView {
@@ -38,6 +39,7 @@ struct TemplatesView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
+                        print("Add template button tapped")
                         isShowingImagePicker = true
                     }) {
                         Image(systemName: "plus")
@@ -52,27 +54,41 @@ struct TemplatesView: View {
                 ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
             }
             .onChange(of: selectedImage) { newImage in
+                print("Selected image changed: \(newImage != nil)")
                 if newImage != nil {
+                    // Show category picker when image is selected
                     isShowingCategoryPicker = true
                 }
+            }
+            .alert(isPresented: $showAlert) {
+                Alert(title: Text("Upload Status"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
             }
             .actionSheet(isPresented: $isShowingCategoryPicker) {
                 ActionSheet(title: Text("Select Template Category"), buttons:
                     ItemCategory.allCases.map { category in
                         .default(Text(category.displayName)) {
-                            if let image = selectedImage {
-                                dataManager.uploadTemplate(image: image, category: category)
-                                selectedImage = nil
-                            }
+                            uploadTemplate(category: category)
                         }
                     } + [.cancel()]
                 )
             }
         }
     }
+    
+    private func uploadTemplate(category: ItemCategory) {
+        print("Uploading template with category: \(category.rawValue)")
+        if let image = selectedImage {
+            dataManager.uploadTemplate(image: image, category: category, completion: { success, message in
+                self.alertMessage = message
+                self.showAlert = true
+                if success {
+                    self.selectedImage = nil
+                }
+            })
+        }
+    }
 }
 
-// Template Row
 struct TemplateRow: View {
     let template: Template
     
