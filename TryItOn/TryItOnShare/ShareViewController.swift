@@ -1,6 +1,3 @@
-// Share Extension
-// This file should be added to a new Share Extension target in your iOS project
-
 import UIKit
 import Social
 import MobileCoreServices
@@ -8,8 +5,11 @@ import MobileCoreServices
 class ShareViewController: SLComposeServiceViewController {
     
     private var urlString: String?
-    private var selectedCategory: String = "general"
+    private var selectedCategory: String = "clothing" // Default to clothing
     private var imageData: Data?
+    
+    // Use the same API configuration as the main app
+    private let baseURL = "https://tryiton.shopping"
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -98,8 +98,8 @@ class ShareViewController: SLComposeServiceViewController {
     override func didSelectPost() {
         // This is called when the user selects Post
         
-        // Get username from app group shared storage
-        let userDefaults = UserDefaults(suiteName: "group.com.yourdomain.TryItOn")
+        // Get username from app group shared storage - using the correct group identifier
+        let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
         guard let username = userDefaults?.string(forKey: "username") else {
             let alert = UIAlertController(
                 title: "Not Logged In",
@@ -114,12 +114,12 @@ class ShareViewController: SLComposeServiceViewController {
         }
         
         // Determine if we're processing a URL or an image
-        if let urlString = urlString, urlString.contains("instagram.com") || urlString.contains("tiktok.com") {
-            // Process URL (Instagram or TikTok)
-            sendURLToApp(url: urlString, username: username)
+        if let urlString = urlString {
+            // Process URL (Instagram, TikTok, or any other URL)
+            uploadItemFromURL(url: urlString, username: username)
         } else if let imageData = imageData {
-            // Process image data as template (for selfies)
-            sendImageToApp(imageData: imageData, username: username, isTemplate: true)
+            // Process image data
+            uploadItemFromImage(imageData: imageData, username: username)
         } else {
             // Show error
             let alert = UIAlertController(
@@ -135,10 +135,9 @@ class ShareViewController: SLComposeServiceViewController {
         }
     }
     
-    private func sendURLToApp(url: String, username: String) {
-        // Base URL of your API
-        let baseURL = "http://your-api-server:8000" // Replace with your actual API URL
-        let apiURL = URL(string: "\(baseURL)/tryon/url/")!
+    private func uploadItemFromURL(url: String, username: String) {
+        // Use the same endpoint as in the main app's DataManager
+        let apiURL = URL(string: "\(baseURL)/items/url/")!
         
         // Create form data
         let boundary = UUID().uuidString
@@ -149,10 +148,16 @@ class ShareViewController: SLComposeServiceViewController {
         
         var formData = Data()
         
-        // Add URL
+        // Add URL - matching the format in DataManager.uploadItemFromURL
         formData.append("--\(boundary)\r\n".data(using: .utf8)!)
         formData.append("Content-Disposition: form-data; name=\"url\"\r\n\r\n".data(using: .utf8)!)
         formData.append(url.data(using: .utf8)!)
+        
+        // Add category
+        formData.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+        formData.append("Content-Disposition: form-data; name=\"category\"\r\n\r\n".data(using: .utf8)!)
+        formData.append(selectedCategory.data(using: .utf8)!)
+        
         formData.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
         
         request.httpBody = formData
@@ -174,21 +179,25 @@ class ShareViewController: SLComposeServiceViewController {
                     return
                 }
                 
-                // Success - close extension
-                self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                // Show success message
+                let alert = UIAlertController(
+                    title: "Success",
+                    message: "Item has been added to TryItOn",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                    self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                })
+                self?.present(alert, animated: true)
             }
         }
         
         task.resume()
     }
     
-    private func sendImageToApp(imageData: Data, username: String, isTemplate: Bool) {
-        // Base URL of your API
-        let baseURL = "http://your-api-server:8000" // Replace with your actual API URL
-        
-        // Determine which endpoint to use
-        let endpoint = isTemplate ? "/templates/" : "/tryon/upload/"
-        let apiURL = URL(string: "\(baseURL)\(endpoint)")!
+    private func uploadItemFromImage(imageData: Data, username: String) {
+        // Use the same endpoint as in the main app's DataManager
+        let apiURL = URL(string: "\(baseURL)/items/upload/")!
         
         // Create form data
         let boundary = UUID().uuidString
@@ -201,16 +210,14 @@ class ShareViewController: SLComposeServiceViewController {
         
         // Add image data
         formData.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
-        formData.append("Content-Disposition: form-data; name=\"file\"; filename=\"image.jpg\"\r\n".data(using: .utf8)!)
+        formData.append("Content-Disposition: form-data; name=\"file\"; filename=\"item.jpg\"\r\n".data(using: .utf8)!)
         formData.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
         formData.append(imageData)
         
-        // If this is a template, add category
-        if isTemplate {
-            formData.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
-            formData.append("Content-Disposition: form-data; name=\"category\"\r\n\r\n".data(using: .utf8)!)
-            formData.append(selectedCategory.data(using: .utf8)!)
-        }
+        // Add category
+        formData.append("\r\n--\(boundary)\r\n".data(using: .utf8)!)
+        formData.append("Content-Disposition: form-data; name=\"category\"\r\n\r\n".data(using: .utf8)!)
+        formData.append(selectedCategory.data(using: .utf8)!)
         
         // End form data
         formData.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
@@ -234,8 +241,16 @@ class ShareViewController: SLComposeServiceViewController {
                     return
                 }
                 
-                // Success - close extension
-                self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                // Show success message
+                let alert = UIAlertController(
+                    title: "Success",
+                    message: "Item has been added to TryItOn",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
+                    self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+                })
+                self?.present(alert, animated: true)
             }
         }
         

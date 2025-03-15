@@ -100,10 +100,11 @@ class AuthManager: ObservableObject {
                 UserDefaults.standard.set(isPro, forKey: "isPro")
                 
                 // Also save to App Group storage for the share extension
-                let userDefaults = UserDefaults(suiteName: "group.com.yourdomain.TryItOn")
+                let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
                 userDefaults?.set(username, forKey: "username")
                 userDefaults?.set(isPro, forKey: "isPro")
-                
+                userDefaults?.synchronize() // Add this line
+
                 self.isAuthenticated = true
             }
         }.resume()
@@ -114,10 +115,12 @@ class AuthManager: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "isPro")
         
         // Also clear from App Group storage
-        let userDefaults = UserDefaults(suiteName: "group.com.yourdomain.TryItOn")
+        let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
+
         userDefaults?.removeObject(forKey: "username")
         userDefaults?.removeObject(forKey: "isPro")
-        
+        userDefaults?.synchronize() // Add this line
+
         username = ""
         isPro = false
         isAuthenticated = false
