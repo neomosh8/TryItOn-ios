@@ -6,9 +6,48 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		687854012D85EDB400CA3063 /* TryItOnShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 687853F72D85EDB400CA3063 /* TryItOnShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		687853FF2D85EDB400CA3063 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 687853B62D85E9F900CA3063 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 687853F62D85EDB400CA3063;
+			remoteInfo = TryItOnShare;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		687854062D85EDB400CA3063 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				687854012D85EDB400CA3063 /* TryItOnShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		687853BE2D85E9F900CA3063 /* TryItOn.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TryItOn.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		687853F72D85EDB400CA3063 /* TryItOnShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TryItOnShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		687854022D85EDB400CA3063 /* Exceptions for "TryItOnShare" folder in "TryItOnShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 687853F62D85EDB400CA3063 /* TryItOnShare */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		687853C02D85E9F900CA3063 /* TryItOn */ = {
@@ -16,10 +55,25 @@
 			path = TryItOn;
 			sourceTree = "<group>";
 		};
+		687853F82D85EDB400CA3063 /* TryItOnShare */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				687854022D85EDB400CA3063 /* Exceptions for "TryItOnShare" folder in "TryItOnShare" target */,
+			);
+			path = TryItOnShare;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		687853BB2D85E9F900CA3063 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		687853F42D85EDB400CA3063 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				687853C02D85E9F900CA3063 /* TryItOn */,
+				687853F82D85EDB400CA3063 /* TryItOnShare */,
 				687853BF2D85E9F900CA3063 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				687853BE2D85E9F900CA3063 /* TryItOn.app */,
+				687853F72D85EDB400CA3063 /* TryItOnShare.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,10 +111,12 @@
 				687853BA2D85E9F900CA3063 /* Sources */,
 				687853BB2D85E9F900CA3063 /* Frameworks */,
 				687853BC2D85E9F900CA3063 /* Resources */,
+				687854062D85EDB400CA3063 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				687854002D85EDB400CA3063 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				687853C02D85E9F900CA3063 /* TryItOn */,
@@ -69,6 +127,28 @@
 			productName = TryItOn;
 			productReference = 687853BE2D85E9F900CA3063 /* TryItOn.app */;
 			productType = "com.apple.product-type.application";
+		};
+		687853F62D85EDB400CA3063 /* TryItOnShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 687854032D85EDB400CA3063 /* Build configuration list for PBXNativeTarget "TryItOnShare" */;
+			buildPhases = (
+				687853F32D85EDB400CA3063 /* Sources */,
+				687853F42D85EDB400CA3063 /* Frameworks */,
+				687853F52D85EDB400CA3063 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				687853F82D85EDB400CA3063 /* TryItOnShare */,
+			);
+			name = TryItOnShare;
+			packageProductDependencies = (
+			);
+			productName = TryItOnShare;
+			productReference = 687853F72D85EDB400CA3063 /* TryItOnShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,6 +161,9 @@
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					687853BD2D85E9F900CA3063 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					687853F62D85EDB400CA3063 = {
 						CreatedOnToolsVersion = 16.2;
 					};
 				};
@@ -100,12 +183,20 @@
 			projectRoot = "";
 			targets = (
 				687853BD2D85E9F900CA3063 /* TryItOn */,
+				687853F62D85EDB400CA3063 /* TryItOnShare */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		687853BC2D85E9F900CA3063 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		687853F52D85EDB400CA3063 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +213,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		687853F32D85EDB400CA3063 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		687854002D85EDB400CA3063 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 687853F62D85EDB400CA3063 /* TryItOnShare */;
+			targetProxy = 687853FF2D85EDB400CA3063 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		687853CA2D85E9FB00CA3063 /* Debug */ = {
@@ -249,6 +355,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TryItOn/TryItOn.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"TryItOn/Preview Content\"";
@@ -278,6 +385,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TryItOn/TryItOn.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"TryItOn/Preview Content\"";
@@ -302,6 +410,58 @@
 			};
 			name = Release;
 		};
+		687854042D85EDB400CA3063 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TryItOnShare/TryItOnShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MS7857L94F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TryItOnShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TryItOnShare;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = neocore.TryItOn.TryItOnShare;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		687854052D85EDB400CA3063 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TryItOnShare/TryItOnShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = MS7857L94F;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TryItOnShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TryItOnShare;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = neocore.TryItOn.TryItOnShare;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -319,6 +479,15 @@
 			buildConfigurations = (
 				687853CD2D85E9FB00CA3063 /* Debug */,
 				687853CE2D85E9FB00CA3063 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		687854032D85EDB400CA3063 /* Build configuration list for PBXNativeTarget "TryItOnShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				687854042D85EDB400CA3063 /* Debug */,
+				687854052D85EDB400CA3063 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

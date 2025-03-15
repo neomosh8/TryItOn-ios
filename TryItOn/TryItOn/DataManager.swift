@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine  // Add this import
 
 // Copy the LoginView struct code from the first artifact
 // MARK: - Data Manager

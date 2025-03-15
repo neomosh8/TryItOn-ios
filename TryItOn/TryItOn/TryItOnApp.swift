@@ -43,8 +43,13 @@ class AuthManager: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let userData = ["username": username, "is_pro": isPro]
+
+        // Create a proper encodable structure
+        struct UserData: Codable {
+            let username: String
+            let is_pro: Bool
+        }
+        let userData = UserData(username: username, is_pro: isPro)
         request.httpBody = try? JSONEncoder().encode(userData)
         
         URLSession.shared.dataTask(with: request) { data, response, error in
