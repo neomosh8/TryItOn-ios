@@ -127,6 +127,7 @@ class AuthManager: ObservableObject {
 // MARK: - API Configuration
 struct APIConfig {
     // For simulator
+//    static let baseURL = "https://tryiton.shopping"
     static let baseURL = "http://localhost:8000"
     
     // OR if using a physical device (use your computer's IP address)

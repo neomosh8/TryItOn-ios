@@ -300,4 +300,109 @@ class DataManager: ObservableObject {
             }
         }.resume()
     }
+    
+    // Add to DataManager class:
+    func tryOnWithTemplate(itemId: Int, templateId: Int, completion: @escaping (Result<UIImage, Error>) -> Void) {
+        guard let username = authManager?.username, !username.isEmpty else {
+            completion(.failure(NSError(domain: "TryItOn", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])))
+            return
+        }
+        
+        isLoading = true
+        let url = URL(string: "\(APIConfig.baseURL)/tryon/combine/")!
+        
+        // Create request body
+        struct CombineRequest: Codable {
+            let item_id: Int
+            let template_id: Int
+        }
+        
+        let request = CombineRequest(item_id: itemId, template_id: templateId)
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.allHTTPHeaderFields = APIConfig.authHeader(username: username)
+        urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        do {
+            urlRequest.httpBody = try JSONEncoder().encode(request)
+        } catch {
+            print("Error encoding request: \(error)")
+            completion(.failure(error))
+            return
+        }
+        
+        URLSession.shared.dataTaskPublisher(for: urlRequest)
+            .map { data, response -> Data in
+                // Print response info for debugging
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("Response status code: \(httpResponse.statusCode)")
+                }
+                
+                // Print raw response for debugging
+                if let responseStr = String(data: data, encoding: .utf8) {
+                    print("Raw response: \(responseStr)")
+                }
+                
+                return data
+            }
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { [weak self] completionStatus in
+                self?.isLoading = false
+                
+                if case .failure(let error) = completionStatus {
+                    print("Network error: \(error)")
+                    completion(.failure(error))
+                }
+            }, receiveValue: { data in
+                // First try to decode the error response if there is one
+                if let errorResponse = try? JSONDecoder().decode([String: String].self, from: data),
+                   let errorDetail = errorResponse["detail"] {
+                    completion(.failure(NSError(domain: "TryItOn", code: 400, userInfo: [NSLocalizedDescriptionKey: errorDetail])))
+                    return
+                }
+                
+                // Try to decode the successful response
+                do {
+                    let response = try JSONDecoder().decode(Response.self, from: data)
+                    print("Decoded response URL: \(response.result_url)")
+                    
+                    guard let imageURL = URL(string: response.result_url) else {
+                        print("Invalid URL: \(response.result_url)")
+                        completion(.failure(NSError(domain: "TryItOn", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid URL in response"])))
+                        return
+                    }
+                    
+                    // Download the result image
+                    URLSession.shared.dataTask(with: imageURL) { data, response, error in
+                        DispatchQueue.main.async {
+                            if let error = error {
+                                print("Image download error: \(error)")
+                                completion(.failure(error))
+                                return
+                            }
+                            
+                            guard let data = data, let image = UIImage(data: data) else {
+                                completion(.failure(NSError(domain: "TryItOn", code: 400, userInfo: [NSLocalizedDescriptionKey: "Could not load result image"])))
+                                return
+                            }
+                            
+                            completion(.success(image))
+                        }
+                    }.resume()
+                } catch {
+                    print("JSON decoding error: \(error)")
+                    if let responseStr = String(data: data, encoding: .utf8) {
+                        print("Failed to decode: \(responseStr)")
+                    }
+                    completion(.failure(NSError(domain: "TryItOn", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid server response format"])))
+                }
+            })
+            .store(in: &cancellables)
+    }
+
+    // Helper struct to match the server response
+    struct Response: Codable {
+        let result_url: String
+    }
 }

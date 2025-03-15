@@ -43,32 +43,3 @@ struct LoginView: View {
     }
 }
 
-// Main Tab View
-struct MainTabView: View {
-    @EnvironmentObject var authManager: AuthManager
-    @EnvironmentObject var dataManager: DataManager
-    
-    var body: some View {
-        TabView {
-            ResultsListView()
-                .tabItem {
-                    Label("Results", systemImage: "photo.on.rectangle")
-                }
-            
-            TemplatesView()
-                .tabItem {
-                    Label("Templates", systemImage: "person.crop.rectangle")
-                }
-            
-            TryOnView()
-                .tabItem {
-                    Label("Try On", systemImage: "tshirt")
-                }
-            
-            ProfileView()
-                .tabItem {
-                    Label("Profile", systemImage: "person.circle")
-                }
-        }
-    }
-}
