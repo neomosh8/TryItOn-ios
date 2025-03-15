@@ -1,16 +1,14 @@
-// Main Tab View
 import SwiftUI
 
-// MainTabView (update the existing struct in LoginView.swift)
 struct MainTabView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var dataManager: DataManager
     
     var body: some View {
         TabView {
-            ResultsListView()
+            FittingRoomView()
                 .tabItem {
-                    Label("Results", systemImage: "photo.on.rectangle")
+                    Label("Fitting Room", systemImage: "tshirt")
                 }
             
             TemplatesView()
@@ -18,24 +16,15 @@ struct MainTabView: View {
                     Label("Templates", systemImage: "person.crop.rectangle")
                 }
             
-            TryOnView()
+            AddItemView()
                 .tabItem {
-                    Label("Try On", systemImage: "tshirt")
-                }
-            
-            FittingRoomView()
-                .tabItem {
-                    Label("Fitting Room", systemImage: "rectangle.and.text.magnifyingglass")
+                    Label("Items", systemImage: "square.grid.2x2")
                 }
             
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.circle")
                 }
-            AddItemView()
-                            .tabItem {
-                                Label("Add Item", systemImage: "plus.circle")
-                            }
         }
     }
 }
