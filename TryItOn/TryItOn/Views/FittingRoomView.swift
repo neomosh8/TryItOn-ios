@@ -13,6 +13,7 @@ struct FittingRoomView: View {
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
     @State private var shouldSelectFirstTemplate = false
+    @State private var isZoomed = false
     
     var body: some View {
         VStack {
@@ -47,39 +48,127 @@ struct FittingRoomView: View {
                         .scaleEffect(2)
                         .progressViewStyle(CircularProgressViewStyle(tint: .blue))
                 } else if let image = currentResult {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .scaleEffect(scale)
-                        .offset(offset)
-                        .gesture(
-                            MagnificationGesture()
-                                .onChanged { value in
-                                    let delta = value / self.lastScale
-                                    self.lastScale = value
-                                    self.scale = min(max(self.scale * delta, 1.0), 5.0)
+                    ZStack {
+                        // Result image with gesture modifiers
+                        ZStack {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFit()
+                                .scaleEffect(scale)
+                                .offset(offset)
+                                .gesture(
+                                    MagnificationGesture()
+                                        .onChanged { value in
+                                            let delta = value / self.lastScale
+                                            self.lastScale = value
+                                            let newScale = self.scale * delta
+                                            self.scale = min(max(newScale, 0.5), 6.0)
+                                        }
+                                        .onEnded { _ in
+                                            self.lastScale = 1.0
+                                            if self.scale > 1.1 {
+                                                self.isZoomed = true
+                                            } else if self.scale < 0.9 {
+                                                self.isZoomed = false
+                                            }
+                                        }
+                                )
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { value in
+                                            if scale > 1.0 {
+                                                self.offset = CGSize(
+                                                    width: self.lastOffset.width + value.translation.width,
+                                                    height: self.lastOffset.height + value.translation.height
+                                                )
+                                            }
+                                        }
+                                        .onEnded { _ in
+                                            self.lastOffset = self.offset
+                                        }
+                                )
+                                .onTapGesture(count: 2) {
+                                    withAnimation(.spring()) {
+                                        if isZoomed {
+                                            self.scale = 1.0
+                                            self.offset = .zero
+                                            self.lastOffset = .zero
+                                            self.isZoomed = false
+                                        } else {
+                                            self.scale = 2.5
+                                            self.isZoomed = true
+                                        }
+                                    }
                                 }
-                                .onEnded { _ in
-                                    self.lastScale = 1.0
-                                }
-                        )
-                        .gesture(
-                            DragGesture()
-                                .onChanged { value in
-                                    self.offset = CGSize(
-                                        width: self.lastOffset.width + value.translation.width,
-                                        height: self.lastOffset.height + value.translation.height
-                                    )
-                                }
-                                .onEnded { _ in
-                                    self.lastOffset = self.offset
-                                }
-                        )
-                        .onTapGesture(count: 2) {
-                            self.scale = 1.0
-                            self.offset = .zero
-                            self.lastOffset = .zero
                         }
+                        .overlay(
+                            // Zoom instructions indicator
+                            VStack {
+                                HStack {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.black.opacity(0.6))
+                                            .frame(width: 190, height: 30)
+                                        
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "hand.draw")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.white)
+                                            
+                                            Text("Pinch to zoom • Double-tap")
+                                                .font(.system(size: 12))
+                                                .foregroundColor(.white)
+                                        }
+                                    }
+                                    .padding(.leading, 8)
+                                    .padding(.top, 8)
+                                    .opacity(0.8)
+                                    
+                                    Spacer()
+                                    
+                                    // Reset zoom button
+                                    if isZoomed {
+                                        Button(action: {
+                                            withAnimation(.spring()) {
+                                                self.scale = 1.0
+                                                self.offset = .zero
+                                                self.lastOffset = .zero
+                                                self.isZoomed = false
+                                            }
+                                        }) {
+                                            Image(systemName: "arrow.counterclockwise")
+                                                .foregroundColor(.white)
+                                                .padding(8)
+                                                .background(Color.black.opacity(0.6))
+                                                .clipShape(Circle())
+                                        }
+                                        .padding(.trailing, 8)
+                                        .padding(.top, 8)
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                        )
+                        
+                        // Share icon positioned at top right corner
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Button(action: {
+                                    saveToGallery()
+                                }) {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .foregroundColor(.white)
+                                        .padding(8)
+                                        .background(Color.black.opacity(0.6))
+                                        .clipShape(Circle())
+                                }
+                                .padding(12)
+                            }
+                            Spacer()
+                        }
+                    }
                 } else {
                     VStack {
                         Image(systemName: "tshirt")
@@ -126,38 +215,23 @@ struct FittingRoomView: View {
                 }
             }
             
-            // Action buttons
-            HStack(spacing: 20) {
-                Button(action: {
-                    tryItOn()
-                }) {
-                    Text("Try It On")
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(minWidth: 120)
-                        .background(
-                            dataManager.items.isEmpty || dataManager.templates.isEmpty
-                                ? Color.gray
-                                : Color.blue
-                        )
-                        .cornerRadius(8)
-                }
-                .disabled(dataManager.items.isEmpty || dataManager.templates.isEmpty)
-                
-                if currentResult != nil {
-                    Button(action: {
-                        saveToGallery()
-                    }) {
-                        Text("Save to Gallery")
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(minWidth: 120)
-                            .background(Color.green)
-                            .cornerRadius(8)
-                    }
-                }
+            // Action button - only "Try It On" remains
+            Button(action: {
+                tryItOn()
+            }) {
+                Text("Try It On")
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        dataManager.items.isEmpty || dataManager.templates.isEmpty
+                            ? Color.gray
+                            : Color.blue
+                    )
+                    .cornerRadius(8)
             }
-            .padding(.bottom)
+            .disabled(dataManager.items.isEmpty || dataManager.templates.isEmpty)
+            .padding([.horizontal, .bottom])
         }
         .navigationTitle("Fitting Room")
         .onAppear {
@@ -194,6 +268,11 @@ struct FittingRoomView: View {
                 switch result {
                 case .success(let image):
                     self.currentResult = image
+                    // Reset zoom state when loading a new image
+                    self.scale = 1.0
+                    self.offset = .zero
+                    self.lastOffset = .zero
+                    self.isZoomed = false
                 case .failure(let error):
                     print("Error: \(error.localizedDescription)")
                     self.errorMessage = error.localizedDescription
