@@ -8,23 +8,35 @@ struct MainTabView: View {
         TabView {
             FittingRoomView()
                 .tabItem {
-                    Label("Fitting Room", systemImage: "tshirt")
+                    Label("My Closet", systemImage: "tshirt.fill")
                 }
             
             TemplatesView()
                 .tabItem {
-                    Label("Templates", systemImage: "person.crop.rectangle")
+                    Label("Models", systemImage: "person.crop.rectangle.fill")
                 }
             
             AddItemView()
                 .tabItem {
-                    Label("Items", systemImage: "square.grid.2x2")
+                    Label("Add Items", systemImage: "plus.circle.fill")
                 }
             
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person.circle")
+                    Label("Profile", systemImage: "person.circle.fill")
                 }
+        }
+        .accentColor(AppTheme.accentColor) // Set the accent color for the tab bar
+        .onAppear {
+            // Set the tab bar appearance
+            let appearance = UITabBarAppearance()
+            appearance.backgroundColor = UIColor(Color.white.opacity(0.95))
+            appearance.shadowColor = UIColor(Color(hex: "ffcfe1").opacity(0.2))
+            
+            UITabBar.appearance().standardAppearance = appearance
+            if #available(iOS 15.0, *) {
+                UITabBar.appearance().scrollEdgeAppearance = appearance
+            }
         }
     }
 }

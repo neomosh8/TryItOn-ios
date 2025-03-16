@@ -9,235 +9,269 @@ struct ProfileView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Profile header with photo
-                    VStack {
-                        if let profileImage = authManager.profileImage {
-                            Image(uiImage: profileImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.blue, lineWidth: 2))
-                                .shadow(radius: 5)
-                        } else {
-                            Image(systemName: "person.circle.fill")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 100, height: 100)
-                                .foregroundColor(.blue)
-                        }
-                        
-                        Text(authManager.username)
-                            .font(.title)
-                            .fontWeight(.bold)
-                        
-                        if !authManager.email.isEmpty {
-                            Text(authManager.email)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                        
-                        // Subscription status
-                        HStack(spacing: 8) {
-                            Text("Account Type:")
-                                .font(.subheadline)
-                            
-                            if subscriptionManager.isSubscriptionActive {
-                                Label("Pro", systemImage: "checkmark.seal.fill")
-                                    .font(.subheadline)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.blue)
+            ZStack {
+                // Background gradient
+                AppTheme.backgroundGradient
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Profile header with photo - enhanced styling
+                        VStack {
+                            if let profileImage = authManager.profileImage {
+                                Image(uiImage: profileImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 110, height: 110)
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(AppTheme.accentColor, lineWidth: 3))
+                                    .shadow(color: AppTheme.shadowColor, radius: 8, x: 0, y: 4)
                             } else {
-                                Text("Standard")
-                                    .font(.subheadline)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.gray)
-                                
-                                Button(action: {
-                                    showingSubscriptionView = true
-                                }) {
-                                    Text("Upgrade")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(Color.blue)
+                                ZStack {
+                                    Circle()
+                                        .fill(AppTheme.cardBackground)
+                                        .frame(width: 110, height: 110)
+                                        .shadow(color: AppTheme.shadowColor, radius: 8, x: 0, y: 4)
+                                    
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 80, height: 80)
+                                        .foregroundColor(AppTheme.accentColor)
+                                }
+                            }
+                            
+                            Text(authManager.username)
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(Color(hex: "333333"))
+                                .padding(.top, 8)
+                            
+                            if !authManager.email.isEmpty {
+                                Text(authManager.email)
+                                    .font(.system(size: 16))
+                                    .foregroundColor(Color(hex: "666666"))
+                            }
+                            
+                            // Subscription status with enhanced styling
+                            HStack(spacing: 8) {
+                                if subscriptionManager.isSubscriptionActive {
+                                    Label("Pro Account", systemImage: "star.fill")
+                                        .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(.white)
-                                        .cornerRadius(8)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(AppTheme.secondaryColor)
+                                        .cornerRadius(AppTheme.cornerRadius)
+                                } else {
+                                    Button(action: {
+                                        showingSubscriptionView = true
+                                    }) {
+                                        Label("Upgrade to Pro", systemImage: "star")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.white)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(AppTheme.accentColor)
+                                            .cornerRadius(AppTheme.cornerRadius)
+                                            .shadow(color: AppTheme.accentColor.opacity(0.3), radius: 4, x: 0, y: 2)
+                                    }
                                 }
                             }
-                        }
-                        .padding(.top, 5)
-                        
-                        // Show subscription expiration if applicable
-                        if subscriptionManager.isSubscriptionActive, let expirationDate = subscriptionManager.expirationDate {
-                            Text("Renews \(expirationDate, formatter: dateFormatter)")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                                .padding(.top, 2)
-                        }
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(15)
-                    
-                    // Account info section
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("ACCOUNT INFORMATION")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.gray)
-                            .padding(.leading)
-                            .padding(.bottom, 5)
-                        
-                        VStack(spacing: 0) {
-                            InfoRow(title: "Username", value: authManager.username)
-                            Divider().padding(.leading)
-                            InfoRow(title: "Sign-in Method", value: authProvider)
-                            Divider().padding(.leading)
-                            InfoRow(title: "Account Type", value: subscriptionManager.isSubscriptionActive ? "Pro" : "Standard")
+                            .padding(.top, 8)
                             
-                            if subscriptionManager.isSubscriptionActive {
-                                Divider().padding(.leading)
-                                Button(action: {
-                                    // Open subscription management in Settings
-                                    if let url = URL(string: "App-Prefs:root=STORE") {
-                                        UIApplication.shared.open(url)
-                                    }
-                                }) {
-                                    HStack {
-                                        Text("Manage Subscription")
-                                            .foregroundColor(.blue)
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .foregroundColor(.gray)
-                                    }
-                                    .padding()
-                                }
-                            } else {
-                                Divider().padding(.leading)
-                                Button(action: {
-                                    showingSubscriptionView = true
-                                }) {
-                                    HStack {
-                                        Text("Upgrade to Pro")
-                                            .foregroundColor(.blue)
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .foregroundColor(.gray)
-                                    }
-                                    .padding()
-                                }
+                            // Show subscription expiration if applicable
+                            if subscriptionManager.isSubscriptionActive, let expirationDate = subscriptionManager.expirationDate {
+                                Text("Renews \(expirationDate, formatter: dateFormatter)")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "666666"))
+                                    .padding(.top, 4)
                             }
                         }
-                        .background(Color(.systemBackground))
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color(.systemGray5), lineWidth: 1)
+                        .padding(24)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                                .fill(Color.white)
+                                .shadow(color: AppTheme.shadowColor, radius: 6, x: 0, y: 3)
                         )
-                    }
-                    .padding(.horizontal)
-                    
-                    // Privacy section
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("PRIVACY")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.gray)
-                            .padding(.leading)
-                            .padding(.bottom, 5)
+                        .padding(.horizontal)
                         
-                        VStack(spacing: 0) {
-                            NavigationLink(destination: Text("Privacy Settings")) {
-                                HStack {
-                                    Image(systemName: "lock.shield")
-                                        .foregroundColor(.blue)
-                                        .frame(width: 25)
-                                    Text("Privacy Settings")
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
-                                }
-                                .padding()
-                            }
-                            Divider().padding(.leading)
-                            NavigationLink(destination: Text("Terms and Conditions")) {
-                                HStack {
-                                    Image(systemName: "doc.text")
-                                        .foregroundColor(.blue)
-                                        .frame(width: 25)
-                                    Text("Terms and Conditions")
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.gray)
-                                }
-                                .padding()
-                            }
+                        // Account info section with updated styling
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("ACCOUNT INFORMATION")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(AppTheme.accentColor)
+                                .padding(.leading)
+                                .padding(.bottom, 5)
                             
-                            if subscriptionManager.isSubscriptionActive {
-                                Divider().padding(.leading)
-                                Button(action: {
-                                    Task {
-                                        await subscriptionManager.restorePurchases()
-                                    }
-                                }) {
-                                    HStack {
-                                        Image(systemName: "arrow.clockwise")
-                                            .foregroundColor(.blue)
-                                            .frame(width: 25)
-                                        Text("Restore Purchases")
-                                        Spacer()
-                                        if subscriptionManager.isLoading {
-                                            ProgressView()
-                                                .scaleEffect(0.7)
+                            VStack(spacing: 0) {
+                                InfoRow(title: "Username", value: authManager.username, iconName: "person.fill")
+                                Divider().padding(.leading, 60)
+                                InfoRow(title: "Sign-in Method", value: authProvider, iconName: "lock.fill")
+                                Divider().padding(.leading, 60)
+                                InfoRow(title: "Account Type", value: subscriptionManager.isSubscriptionActive ? "Pro" : "Standard",
+                                       iconName: subscriptionManager.isSubscriptionActive ? "star.fill" : "star")
+                                
+                                if subscriptionManager.isSubscriptionActive {
+                                    Divider().padding(.leading, 60)
+                                    Button(action: {
+                                        // Open subscription management in Settings
+                                        if let url = URL(string: "App-Prefs:root=STORE") {
+                                            UIApplication.shared.open(url)
                                         }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "creditcard.fill")
+                                                .foregroundColor(AppTheme.secondaryColor)
+                                                .frame(width: 24)
+                                                .padding(.leading, 16)
+                                            
+                                            Text("Manage Subscription")
+                                                .foregroundColor(Color(hex: "333333"))
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .foregroundColor(Color(hex: "999999"))
+                                                .font(.system(size: 14))
+                                        }
+                                        .padding(.vertical, 16)
                                     }
-                                    .padding()
+                                } else {
+                                    Divider().padding(.leading, 60)
+                                    Button(action: {
+                                        showingSubscriptionView = true
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "crown.fill")
+                                                .foregroundColor(AppTheme.accentColor)
+                                                .frame(width: 24)
+                                                .padding(.leading, 16)
+                                            
+                                            Text("Upgrade to Pro")
+                                                .foregroundColor(Color(hex: "333333"))
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .foregroundColor(Color(hex: "999999"))
+                                                .font(.system(size: 14))
+                                        }
+                                        .padding(.vertical, 16)
+                                    }
                                 }
                             }
+                            .background(Color.white)
+                            .cornerRadius(AppTheme.cornerRadius)
+                            .shadow(color: AppTheme.shadowColor, radius: 4, x: 0, y: 2)
                         }
-                        .background(Color(.systemBackground))
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color(.systemGray5), lineWidth: 1)
-                        )
-                    }
-                    .padding(.horizontal)
-                    
-                    // Sign out button
-                    Button(action: {
-                        showingLogoutAlert = true
-                    }) {
-                        HStack {
-                            Spacer()
-                            Image(systemName: "arrow.right.square")
-                            Text("Sign Out")
-                                .fontWeight(.semibold)
-                            Spacer()
+                        .padding(.horizontal)
+                        
+                        // Privacy section with updated styling
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("PRIVACY & SUPPORT")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(AppTheme.accentColor)
+                                .padding(.leading)
+                                .padding(.bottom, 5)
+                            
+                            VStack(spacing: 0) {
+                                NavigationLink(destination: Text("Privacy Settings")) {
+                                    HStack {
+                                        Image(systemName: "lock.shield.fill")
+                                            .foregroundColor(AppTheme.secondaryColor)
+                                            .frame(width: 24)
+                                            .padding(.leading, 16)
+                                        
+                                        Text("Privacy Settings")
+                                            .foregroundColor(Color(hex: "333333"))
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(Color(hex: "999999"))
+                                            .font(.system(size: 14))
+                                    }
+                                    .padding(.vertical, 16)
+                                }
+                                Divider().padding(.leading, 60)
+                                NavigationLink(destination: Text("Terms and Conditions")) {
+                                    HStack {
+                                        Image(systemName: "doc.text.fill")
+                                            .foregroundColor(AppTheme.secondaryColor)
+                                            .frame(width: 24)
+                                            .padding(.leading, 16)
+                                        
+                                        Text("Terms and Conditions")
+                                            .foregroundColor(Color(hex: "333333"))
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(Color(hex: "999999"))
+                                            .font(.system(size: 14))
+                                    }
+                                    .padding(.vertical, 16)
+                                }
+                                
+                                if subscriptionManager.isSubscriptionActive {
+                                    Divider().padding(.leading, 60)
+                                    Button(action: {
+                                        Task {
+                                            await subscriptionManager.restorePurchases()
+                                        }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "arrow.clockwise")
+                                                .foregroundColor(AppTheme.secondaryColor)
+                                                .frame(width: 24)
+                                                .padding(.leading, 16)
+                                            
+                                            Text("Restore Purchases")
+                                                .foregroundColor(Color(hex: "333333"))
+                                            Spacer()
+                                            if subscriptionManager.isLoading {
+                                                ProgressView()
+                                                    .scaleEffect(0.7)
+                                                    .tint(AppTheme.accentColor)
+                                            }
+                                        }
+                                        .padding(.vertical, 16)
+                                    }
+                                }
+                            }
+                            .background(Color.white)
+                            .cornerRadius(AppTheme.cornerRadius)
+                            .shadow(color: AppTheme.shadowColor, radius: 4, x: 0, y: 2)
                         }
-                        .padding()
-                        .foregroundColor(.white)
-                        .background(Color.red)
-                        .cornerRadius(10)
+                        .padding(.horizontal)
+                        
+                        // Sign out button with updated styling
+                        Button(action: {
+                            showingLogoutAlert = true
+                        }) {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "arrow.right.square")
+                                    .foregroundColor(.white)
+                                Text("Sign Out")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white)
+                                Spacer()
+                            }
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: AppTheme.buttonCornerRadius)
+                                    .fill(Color(hex: "ff6b8e"))
+                            )
+                            .shadow(color: Color(hex: "ff6b8e").opacity(0.3), radius: 4, x: 0, y: 2)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                        
+                        // App version at the bottom with updated styling
+                        Text("TryItOn v1.0.0")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "999999"))
+                            .padding(.top, 20)
+                            .padding(.bottom, 30)
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 10)
-                    
-                    // App version at the bottom
-                    Text("TryItOn v1.0.0")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.top, 20)
+                    .padding(.top, 20)
                 }
-                .padding(.vertical)
             }
-            .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("My Profile")
+            .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showingSubscriptionView) {
                 NavigationView {
                     SubscriptionView()
@@ -288,19 +322,26 @@ struct ProfileView: View {
     }()
 }
 
-// Keep the existing InfoRow struct
+// Updated InfoRow with icon
 struct InfoRow: View {
     let title: String
     let value: String
+    let iconName: String
     
     var body: some View {
         HStack {
+            Image(systemName: iconName)
+                .foregroundColor(AppTheme.secondaryColor)
+                .frame(width: 24)
+                .padding(.leading, 16)
+            
             Text(title)
-                .foregroundColor(.gray)
+                .foregroundColor(Color(hex: "666666"))
             Spacer()
             Text(value)
-                .fontWeight(.medium)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(Color(hex: "333333"))
         }
-        .padding()
+        .padding(.vertical, 16)
     }
 }

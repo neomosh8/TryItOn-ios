@@ -13,36 +13,82 @@ struct TemplatesView: View {
     var body: some View {
         NavigationView {
             ZStack {
+                // Background gradient
+                AppTheme.backgroundGradient
+                    .ignoresSafeArea()
+                
                 if dataManager.templates.isEmpty {
-                    VStack {
-                        Text("No templates yet")
-                            .font(.headline)
-                        Text("Add some templates to get started")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
+                    VStack(spacing: 16) {
+                        Image(systemName: "person.crop.rectangle.badge.plus")
+                            .font(.system(size: 60))
+                            .foregroundColor(AppTheme.accentColor.opacity(0.6))
+                        
+                        Text("No models yet")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundColor(Color(hex: "333333"))
+                        
+                        Text("Add some models to get started")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(hex: "666666"))
+                            .multilineTextAlignment(.center)
+                        
+                        Button(action: {
+                            isShowingImagePicker = true
+                        }) {
+                            Text("Add Your First Model")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 14)
+                                .background(AppTheme.accentColor)
+                                .cornerRadius(AppTheme.buttonCornerRadius)
+                                .shadow(color: AppTheme.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+                        .padding(.top, 20)
                     }
                 } else {
-                    List {
-                        ForEach(dataManager.templates) { template in
-                            TemplateRow(template: template)
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                            ForEach(dataManager.templates) { template in
+                                TemplateGridItem(template: template)
+                            }
                         }
+                        .padding(.horizontal)
+                        .padding(.top, 12)
                     }
                 }
                 
                 if dataManager.isLoading {
-                    ProgressView()
-                        .scaleEffect(2)
-                        .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                    ZStack {
+                        Color.black.opacity(0.2)
+                            .ignoresSafeArea()
+                        
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(2)
+                                .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.accentColor))
+                            
+                            Text("Processing...")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color(hex: "333333"))
+                        }
+                        .padding(24)
+                        .background(Color.white)
+                        .cornerRadius(AppTheme.cornerRadius)
+                        .shadow(color: AppTheme.shadowColor, radius: 10, x: 0, y: 5)
+                    }
                 }
             }
-            .navigationTitle("My Templates")
+            .navigationTitle("My Models")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        print("Add template button tapped")
                         isShowingImagePicker = true
                     }) {
-                        Image(systemName: "plus")
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(AppTheme.accentColor)
                     }
                 }
             }
@@ -50,22 +96,24 @@ struct TemplatesView: View {
                 dataManager.fetchTemplates()
             }
             .sheet(isPresented: $isShowingImagePicker) {
-                // Show image picker
                 ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
             }
             .onChange(of: selectedImage) { newImage in
-                print("Selected image changed: \(newImage != nil)")
                 if newImage != nil {
-                    // Show category picker when image is selected
                     isShowingCategoryPicker = true
                 }
             }
             .alert(isPresented: $showAlert) {
-                Alert(title: Text("Upload Status"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+                Alert(
+                    title: Text("Upload Status"),
+                    message: Text(alertMessage),
+                    dismissButton: .default(Text("OK"))
+                )
             }
             .actionSheet(isPresented: $isShowingCategoryPicker) {
-                ActionSheet(title: Text("Select Template Category"), buttons:
-                    ItemCategory.allCases.map { category in
+                ActionSheet(
+                    title: Text("Select Template Category"),
+                    buttons: ItemCategory.allCases.map { category in
                         .default(Text(category.displayName)) {
                             uploadTemplate(category: category)
                         }
@@ -76,7 +124,6 @@ struct TemplatesView: View {
     }
     
     private func uploadTemplate(category: ItemCategory) {
-        print("Uploading template with category: \(category.rawValue)")
         if let image = selectedImage {
             dataManager.uploadTemplate(image: image, category: category, completion: { success, message in
                 self.alertMessage = message
@@ -89,6 +136,55 @@ struct TemplatesView: View {
     }
 }
 
+// Updated TemplateRow as a grid item with enhanced styling
+struct TemplateGridItem: View {
+    let template: Template
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let url = template.imageURL {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    ProgressView()
+                        .tint(AppTheme.accentColor)
+                }
+                .frame(height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+                .shadow(color: AppTheme.shadowColor, radius: 5, x: 0, y: 2)
+            } else {
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                        .fill(AppTheme.cardBackground)
+                        .frame(height: 180)
+                    
+                    Image(systemName: "person.crop.rectangle.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .foregroundColor(AppTheme.accentColor.opacity(0.5))
+                        .frame(width: 60, height: 60)
+                }
+                .shadow(color: AppTheme.shadowColor, radius: 5, x: 0, y: 2)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(template.category.capitalized)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color(hex: "333333"))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(AppTheme.cardBackground)
+                    .cornerRadius(8)
+            }
+            .padding(.horizontal, 4)
+            .padding(.bottom, 8)
+        }
+    }
+}
+
+// Original TemplateRow for list views if needed
 struct TemplateRow: View {
     let template: Template
     
@@ -101,25 +197,37 @@ struct TemplateRow: View {
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     ProgressView()
+                        .tint(AppTheme.accentColor)
                 }
                 .frame(width: 80, height: 80)
-                .cornerRadius(8)
+                .cornerRadius(AppTheme.cornerRadius)
+                .shadow(color: AppTheme.shadowColor, radius: 3, x: 0, y: 2)
             } else {
-                Image(systemName: "person.crop.rectangle")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .foregroundColor(.gray)
-                    .frame(width: 80, height: 80)
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                        .fill(AppTheme.cardBackground)
+                        .frame(width: 80, height: 80)
+                    
+                    Image(systemName: "person.crop.rectangle.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .foregroundColor(AppTheme.accentColor.opacity(0.5))
+                        .frame(width: 40, height: 40)
+                }
+                .shadow(color: AppTheme.shadowColor, radius: 3, x: 0, y: 2)
             }
             
             VStack(alignment: .leading) {
-                Text("Template")
-                    .font(.headline)
+                Text("Model")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Color(hex: "333333"))
+                
                 Text("Category: \(template.category.capitalized)")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "666666"))
             }
+            .padding(.leading, 8)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 }

@@ -22,60 +22,90 @@ struct FittingRoomView: View {
     @State private var canvasSize: CGSize = .zero
     @State private var imageSize: CGSize = .zero
     
+    // Color scheme
+    let accentColor = Color(hex: "ffa8c9")
+    let secondaryColor = Color(hex: "d8c2ff")
+    let tertiaryColor = Color(hex: "c2ffdb")
+    let backgroundGradient = LinearGradient(
+        gradient: Gradient(colors: [Color.white, Color(hex: "fff5f8")]),
+        startPoint: .top,
+        endPoint: .bottom
+    )
+    let cardBackground = Color(hex: "f8e6ee")
+    
     var body: some View {
         ZStack {  // Main ZStack for the view
+            // Background gradient
+            backgroundGradient
+                .ignoresSafeArea()
+            
             VStack {
                 // Top slider - User uploaded items
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 15) {
-                        // Add button for items
-                        Button(action: {
-                            showingAddItem = true
-                        }) {
-                            VStack {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.blue.opacity(0.2))
-                                        .frame(width: 80, height: 80)
-                                    
-                                    Image(systemName: "plus.circle.fill")
-                                        .resizable()
-                                        .frame(width: 30, height: 30)
-                                        .foregroundColor(.blue)
+                VStack(alignment: .leading) {
+                    Text("Your Items")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color(hex: "333333"))
+                        .padding(.leading)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 15) {
+                            // Add button for items
+                            Button(action: {
+                                showingAddItem = true
+                            }) {
+                                VStack {
+                                    ZStack {
+                                        Circle()
+                                            .fill(accentColor.opacity(0.2))
+                                            .frame(width: 80, height: 80)
+                                        
+                                        Image(systemName: "plus.circle.fill")
+                                            .resizable()
+                                            .frame(width: 30, height: 30)
+                                            .foregroundColor(accentColor)
+                                    }
+                                }
+                            }
+                            
+                            if dataManager.items.isEmpty {
+                                Text("No items")
+                                    .font(.system(size: 14, weight: .light))
+                                    .foregroundColor(.gray)
+                                    .frame(width: 80, height: 80)
+                                    .background(cardBackground)
+                                    .cornerRadius(16)
+                            } else {
+                                ForEach(Array(dataManager.items.enumerated()), id: \.element.id) { index, item in
+                                    ItemThumbnail(item: item, isSelected: index == selectedItemIndex, accentColor: accentColor)
+                                        .onTapGesture {
+                                            selectedItemIndex = index
+                                        }
                                 }
                             }
                         }
-                        
-                        if dataManager.items.isEmpty {
-                            Text("No items")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                                .frame(width: 80, height: 80)
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(10)
-                        } else {
-                            ForEach(Array(dataManager.items.enumerated()), id: \.element.id) { index, item in
-                                ItemThumbnail(item: item, isSelected: index == selectedItemIndex)
-                                    .onTapGesture {
-                                        selectedItemIndex = index
-                                    }
-                            }
-                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
+                    .frame(height: 100)
                 }
-                .frame(height: 100)
-                .padding(.vertical)
+                .padding(.vertical, 8)
                 
                 // Middle canvas for result display
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.2))
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(cardBackground)
+                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
                     
                     if isLoading {
-                        ProgressView()
-                            .scaleEffect(2)
-                            .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                        VStack {
+                            ProgressView()
+                                .scaleEffect(2)
+                                .progressViewStyle(CircularProgressViewStyle(tint: accentColor))
+                            
+                            Text("Creating your look...")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(accentColor)
+                                .padding(.top, 16)
+                        }
                     } else if let image = currentResult {
                         if !isZoomed {
                             GeometryReader { geometry in
@@ -178,9 +208,9 @@ struct FittingRoomView: View {
                                     VStack {
                                         HStack {
                                             ZStack {
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .fill(Color.black.opacity(0.6))
-                                                    .frame(width: 190, height: 30)
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .fill(accentColor.opacity(0.8))
+                                                    .frame(width: 190, height: 32)
                                                 
                                                 HStack(spacing: 4) {
                                                     Image(systemName: "hand.draw")
@@ -188,13 +218,12 @@ struct FittingRoomView: View {
                                                         .foregroundColor(.white)
                                                     
                                                     Text("Pinch to zoom • Double-tap")
-                                                        .font(.system(size: 12))
+                                                        .font(.system(size: 12, weight: .medium))
                                                         .foregroundColor(.white)
                                                 }
                                             }
                                             .padding(.leading, 8)
                                             .padding(.top, 8)
-                                            .opacity(0.8)
                                             
                                             Spacer()
                                         }
@@ -212,9 +241,10 @@ struct FittingRoomView: View {
                                         }) {
                                             Image(systemName: "square.and.arrow.up")
                                                 .foregroundColor(.white)
-                                                .padding(8)
-                                                .background(Color.black.opacity(0.6))
+                                                .padding(12)
+                                                .background(accentColor)
                                                 .clipShape(Circle())
+                                                .shadow(color: Color.black.opacity(0.15), radius: 3, x: 0, y: 2)
                                         }
                                         .padding(12)
                                     }
@@ -223,16 +253,22 @@ struct FittingRoomView: View {
                             }
                         }
                     } else {
-                        VStack {
-                            Image(systemName: "tshirt")
+                        VStack(spacing: 16) {
+                            Image(systemName: "tshirt.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 100, height: 100)
-                                .foregroundColor(.gray)
+                                .frame(width: 80, height: 80)
+                                .foregroundColor(accentColor.opacity(0.5))
+                            
+                            Text("Create your fashion look!")
+                                .font(.system(size: 22, weight: .medium))
+                                .foregroundColor(Color(hex: "333333"))
+                            
                             Text("Select an item and template, then press \"Try It On\"")
-                                .font(.headline)
+                                .font(.system(size: 16))
                                 .multilineTextAlignment(.center)
-                                .padding()
+                                .foregroundColor(Color.gray)
+                                .padding(.horizontal, 32)
                         }
                     }
                 }
@@ -240,46 +276,53 @@ struct FittingRoomView: View {
                 .padding()
                 
                 // Bottom slider - Templates
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 15) {
-                        // Add button for templates
-                        Button(action: {
-                            showingAddTemplate = true
-                        }) {
-                            VStack {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.blue.opacity(0.2))
-                                        .frame(width: 80, height: 80)
-                                    
-                                    Image(systemName: "plus.circle.fill")
-                                        .resizable()
-                                        .frame(width: 30, height: 30)
-                                        .foregroundColor(.blue)
+                VStack(alignment: .leading) {
+                    Text("Select Model")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color(hex: "333333"))
+                        .padding(.leading)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 15) {
+                            // Add button for templates
+                            Button(action: {
+                                showingAddTemplate = true
+                            }) {
+                                VStack {
+                                    ZStack {
+                                        Circle()
+                                            .fill(secondaryColor.opacity(0.3))
+                                            .frame(width: 80, height: 80)
+                                        
+                                        Image(systemName: "plus.circle.fill")
+                                            .resizable()
+                                            .frame(width: 30, height: 30)
+                                            .foregroundColor(secondaryColor)
+                                    }
+                                }
+                            }
+                            
+                            if dataManager.templates.isEmpty {
+                                Text("No templates")
+                                    .font(.system(size: 14, weight: .light))
+                                    .foregroundColor(.gray)
+                                    .frame(width: 80, height: 80)
+                                    .background(cardBackground)
+                                    .cornerRadius(16)
+                            } else {
+                                ForEach(Array(dataManager.templates.enumerated()), id: \.element.id) { index, template in
+                                    TemplateThumbnail(template: template, isSelected: index == selectedTemplateIndex, accentColor: secondaryColor)
+                                        .onTapGesture {
+                                            selectedTemplateIndex = index
+                                        }
                                 }
                             }
                         }
-                        
-                        if dataManager.templates.isEmpty {
-                            Text("No templates")
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                                .frame(width: 80, height: 80)
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(10)
-                        } else {
-                            ForEach(Array(dataManager.templates.enumerated()), id: \.element.id) { index, template in
-                                TemplateThumbnail(template: template, isSelected: index == selectedTemplateIndex)
-                                    .onTapGesture {
-                                        selectedTemplateIndex = index
-                                    }
-                            }
-                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
+                    .frame(height: 100)
                 }
-                .frame(height: 100)
-                .padding(.vertical)
+                .padding(.vertical, 8)
                 .onChange(of: dataManager.templates.count) { newCount, oldCount in
                     if shouldSelectFirstTemplate && newCount > oldCount {
                         selectedTemplateIndex = 0
@@ -292,21 +335,24 @@ struct FittingRoomView: View {
                     tryItOn()
                 }) {
                     Text("Try It On")
+                        .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white)
-                        .padding()
+                        .padding(.vertical, 16)
                         .frame(maxWidth: .infinity)
                         .background(
                             dataManager.items.isEmpty || dataManager.templates.isEmpty
                                 ? Color.gray
-                                : Color.blue
+                                : accentColor
                         )
-                        .cornerRadius(8)
+                        .cornerRadius(24)
+                        .shadow(color: dataManager.items.isEmpty || dataManager.templates.isEmpty ? Color.clear : accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 .disabled(dataManager.items.isEmpty || dataManager.templates.isEmpty)
                 .padding([.horizontal, .bottom])
             }
         }
-        .navigationTitle("Fitting Room")
+        .navigationTitle("My Virtual Closet")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear {
             dataManager.fetchTemplates()
             dataManager.fetchItems()
@@ -322,13 +368,14 @@ struct FittingRoomView: View {
             if let image = currentResult, !dataManager.items.isEmpty {
                 FittingRoomResultView(
                     resultImage: image,
-                    item: dataManager.items[selectedItemIndex]
+                    item: dataManager.items[selectedItemIndex],
+                    accentColor: accentColor
                 )
             }
         }
         .alert(isPresented: $showErrorAlert) {
             Alert(
-                title: Text("Error"),
+                title: Text("Oops!"),
                 message: Text(errorMessage),
                 dismissButton: .default(Text("OK"))
             )
@@ -360,7 +407,7 @@ struct FittingRoomView: View {
                                         .foregroundColor(.white)
                                         .font(.system(size: 20, weight: .bold))
                                         .padding(12)
-                                        .background(Color.black.opacity(0.6))
+                                        .background(accentColor)
                                         .clipShape(Circle())
                                 }
                                 .padding(.top, 48) // Extra padding to ensure it's not under status bar
@@ -463,9 +510,6 @@ struct FittingRoomView: View {
         let selectedItem = dataManager.items[selectedItemIndex]
         let selectedTemplate = dataManager.templates[selectedTemplateIndex]
         
-        // Don't set flag to select first template anymore
-        // shouldSelectFirstTemplate = true - REMOVED
-        
         dataManager.tryOnItemWithTemplate(
             itemId: selectedItem.id,
             templateId: selectedTemplate.id,
@@ -502,10 +546,11 @@ struct FittingRoomView: View {
     }
 }
 
-// Item thumbnail for the top slider (MODIFIED to remove text label)
+// Item thumbnail for the top slider
 struct ItemThumbnail: View {
     let item: Item
     let isSelected: Bool
+    let accentColor: Color
     
     var body: some View {
         if let url = item.imageURL {
@@ -515,31 +560,35 @@ struct ItemThumbnail: View {
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 ProgressView()
+                    .tint(accentColor)
             }
             .frame(width: 80, height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? accentColor : Color.clear, lineWidth: 3)
             )
+            .shadow(color: isSelected ? accentColor.opacity(0.5) : Color.black.opacity(0.05), radius: isSelected ? 6 : 3, x: 0, y: 2)
         } else {
             Image(systemName: "photo")
                 .resizable()
                 .frame(width: 80, height: 80)
-                .background(Color.gray.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .background(Color(hex: "f8e6ee"))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(isSelected ? accentColor : Color.clear, lineWidth: 3)
                 )
+                .shadow(color: isSelected ? accentColor.opacity(0.5) : Color.black.opacity(0.05), radius: isSelected ? 6 : 3, x: 0, y: 2)
         }
     }
 }
 
-// Template thumbnail for the bottom slider (MODIFIED to remove text label)
+// Template thumbnail for the bottom slider
 struct TemplateThumbnail: View {
     let template: Template
     let isSelected: Bool
+    let accentColor: Color
     
     var body: some View {
         if let url = template.imageURL {
@@ -549,59 +598,76 @@ struct TemplateThumbnail: View {
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 ProgressView()
+                    .tint(accentColor)
             }
             .frame(width: 80, height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? accentColor : Color.clear, lineWidth: 3)
             )
+            .shadow(color: isSelected ? accentColor.opacity(0.5) : Color.black.opacity(0.05), radius: isSelected ? 6 : 3, x: 0, y: 2)
         } else {
-            Image(systemName: "person.crop.rectangle")
+            Image(systemName: "person.crop.rectangle.fill")
                 .resizable()
                 .frame(width: 80, height: 80)
-                .background(Color.gray.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .background(Color(hex: "f8e6ee"))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(isSelected ? accentColor : Color.clear, lineWidth: 3)
                 )
+                .shadow(color: isSelected ? accentColor.opacity(0.5) : Color.black.opacity(0.05), radius: isSelected ? 6 : 3, x: 0, y: 2)
         }
     }
 }
-// Add this struct to the end of your FittingRoomView.swift file
 
 // Result detail view when tapping on an image
 struct FittingRoomResultView: View {
     let resultImage: UIImage
     let item: Item
+    let accentColor: Color
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 24) {
                     Image(uiImage: resultImage)
                         .resizable()
                         .scaledToFit()
-                        .cornerRadius(12)
+                        .cornerRadius(24)
+                        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                         .padding()
                     
-                    VStack(alignment: .leading, spacing: 15) {
-                        Text("Item Information")
-                            .font(.headline)
-                            .padding(.horizontal)
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack {
+                            Text("Item Details")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(Color(hex: "333333"))
+                            
+                            Spacer()
+                            
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(accentColor)
+                                .font(.system(size: 18))
+                        }
+                        .padding(.horizontal)
                         
                         HStack {
                             Text("Category:")
                                 .fontWeight(.medium)
+                                .foregroundColor(Color(hex: "666666"))
                             Text(item.category.capitalized)
+                                .foregroundColor(Color(hex: "333333"))
+                                .font(.system(size: 16, weight: .medium))
                         }
                         .padding(.horizontal)
                         
                         if let url = item.imageURL {
                             Text("Original Item:")
                                 .fontWeight(.medium)
+                                .foregroundColor(Color(hex: "666666"))
                                 .padding(.horizontal)
                             
                             AsyncImage(url: url) { image in
@@ -609,31 +675,56 @@ struct FittingRoomResultView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .frame(height: 200)
-                                    .cornerRadius(8)
+                                    .cornerRadius(16)
+                                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                             } placeholder: {
                                 ProgressView()
+                                    .tint(accentColor)
                             }
                             .padding(.horizontal)
                         }
                     }
                     .padding(.vertical)
                     
-                    Button(action: {
-                        UIImageWriteToSavedPhotosAlbum(resultImage, nil, nil, nil)
-                        let impactMed = UIImpactFeedbackGenerator(style: .medium)
-                        impactMed.impactOccurred()
-                    }) {
-                        Label("Save to Photos", systemImage: "square.and.arrow.down")
-                            .foregroundColor(.white)
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.blue)
-                            .cornerRadius(8)
+                    VStack(spacing: 12) {
+                        Button(action: {
+                            UIImageWriteToSavedPhotosAlbum(resultImage, nil, nil, nil)
+                            let impactMed = UIImpactFeedbackGenerator(style: .medium)
+                            impactMed.impactOccurred()
+                        }) {
+                            Label("Save to Photos", systemImage: "square.and.arrow.down")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(accentColor)
+                                .cornerRadius(24)
+                                .shadow(color: accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+                        .padding(.horizontal)
+                        
+                        Button(action: {
+                            // Share action would go here
+                        }) {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(accentColor)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.white)
+                                .cornerRadius(24)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 24)
+                                        .stroke(accentColor, lineWidth: 1)
+                                )
+                                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
                 }
+                .padding(.bottom, 24)
             }
-            .navigationTitle("Try-On Result")
+            .navigationTitle("Your Style")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -641,9 +732,39 @@ struct FittingRoomResultView: View {
                         dismiss()
                     }) {
                         Text("Done")
+                            .fontWeight(.medium)
+                            .foregroundColor(accentColor)
                     }
                 }
             }
         }
+    }
+}
+
+// Extension to create Color from hex string
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }
