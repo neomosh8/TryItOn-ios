@@ -56,12 +56,20 @@
 			);
 			target = 687853F62D85EDB400CA3063 /* TryItOnShare */;
 		};
+		687854762D866D1B00CA3063 /* Exceptions for "TryItOn" folder in "TryItOn" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 687853BD2D85E9F900CA3063 /* TryItOn */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		687853C02D85E9F900CA3063 /* TryItOn */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				687854762D866D1B00CA3063 /* Exceptions for "TryItOn" folder in "TryItOn" target */,
 				687854742D8663C100CA3063 /* Exceptions for "TryItOn" folder in "TryItOnShare" target */,
 			);
 			path = TryItOn;
@@ -381,6 +389,7 @@
 				DEVELOPMENT_TEAM = MS7857L94F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TryItOn/Info.plist;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "TryItOn needs permission to save try-on images to your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -412,6 +421,7 @@
 				DEVELOPMENT_TEAM = MS7857L94F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TryItOn/Info.plist;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "TryItOn needs permission to save try-on images to your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
