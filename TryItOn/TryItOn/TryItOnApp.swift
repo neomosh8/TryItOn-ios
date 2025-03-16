@@ -3,6 +3,10 @@
 
 import SwiftUI
 import Combine
+import os.log
+
+// Create a logger for debugging
+let appLogger = Logger(subsystem: "neocore.TryItOn", category: "AppAuthentication")
 
 @main
 struct TryItOnApp: App {
@@ -15,6 +19,15 @@ struct TryItOnApp: App {
             ContentView()
                 .environmentObject(authManager)
                 .environmentObject(dataManager)
+                .onAppear {
+                    // Debug the shared container on app launch
+                    let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
+                    if let username = userDefaults?.string(forKey: "username") {
+                        appLogger.log("App launch - Shared container has username: \(username)")
+                    } else {
+                        appLogger.log("App launch - Shared container has NO username")
+                    }
+                }
         }
     }
 }
@@ -49,6 +62,7 @@ struct ContentView: View {
 }
 
 // MARK: - Authentication and User Management
+// MARK: - Authentication and User Management
 class AuthManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var username: String = ""
@@ -56,14 +70,32 @@ class AuthManager: ObservableObject {
     
     // Check for saved login credentials
     func checkSavedLogin() {
+        appLogger.log("Checking for saved login")
+        
+        // Check standard UserDefaults
         if let username = UserDefaults.standard.string(forKey: "username") {
+            appLogger.log("Found username in standard UserDefaults: \(username)")
             self.username = username
             self.isPro = UserDefaults.standard.bool(forKey: "isPro")
             self.isAuthenticated = true
+            
+            // Verify shared container has the data too
+            let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
+            if let sharedUsername = userDefaults?.string(forKey: "username") {
+                appLogger.log("Shared container also has username: \(sharedUsername)")
+            } else {
+                appLogger.log("WARNING: Username not found in shared container, fixing it now")
+                userDefaults?.set(username, forKey: "username")
+                userDefaults?.set(self.isPro, forKey: "isPro")
+                userDefaults?.synchronize()
+            }
+        } else {
+            appLogger.log("No username found in UserDefaults")
         }
     }
     
     func login(username: String, isPro: Bool) {
+        appLogger.log("Logging in with username: \(username), isPro: \(isPro)")
         self.username = username
         self.isPro = isPro
         
@@ -84,49 +116,66 @@ class AuthManager: ObservableObject {
         do {
             request.httpBody = try JSONEncoder().encode(userData)
         } catch {
-            print("Error encoding user data: \(error)")
+            appLogger.error("Error encoding user data: \(error.localizedDescription)")
             return
         }
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        appLogger.log("Sending login request to server")
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("Login error: \(error)")
+                    appLogger.error("Login error: \(error.localizedDescription)")
                     return
                 }
                 
-                // Save credentials in both locations
+                let httpResponse = response as? HTTPURLResponse
+                appLogger.log("Login response status: \(httpResponse?.statusCode ?? 0)")
+                
+                // Save credentials in standard UserDefaults
+                appLogger.log("Saving to standard UserDefaults")
                 UserDefaults.standard.set(username, forKey: "username")
                 UserDefaults.standard.set(isPro, forKey: "isPro")
                 
-                // Also save to App Group storage for the share extension
+                // Save to App Group storage for the share extension
+                appLogger.log("Saving to shared container")
                 let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
                 userDefaults?.set(username, forKey: "username")
                 userDefaults?.set(isPro, forKey: "isPro")
-                userDefaults?.synchronize() // Add this line
-
-                self.isAuthenticated = true
+                userDefaults?.synchronize()
+                
+                // Verify the data was saved correctly
+                let savedUsername = userDefaults?.string(forKey: "username")
+                appLogger.log("Verified shared container now has username: \(savedUsername ?? "nil")")
+                
+                self?.isAuthenticated = true
             }
         }.resume()
     }
     
     func logout() {
+        appLogger.log("Logging out user: \(self.username)")
+        
         UserDefaults.standard.removeObject(forKey: "username")
         UserDefaults.standard.removeObject(forKey: "isPro")
         
         // Also clear from App Group storage
         let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
-
         userDefaults?.removeObject(forKey: "username")
         userDefaults?.removeObject(forKey: "isPro")
-        userDefaults?.synchronize() // Add this line
+        userDefaults?.synchronize()
+        
+        // Verify the data was cleared correctly
+        if let username = userDefaults?.string(forKey: "username") {
+            appLogger.error("Failed to clear username from shared container: \(username)")
+        } else {
+            appLogger.log("Successfully cleared username from shared container")
+        }
 
         username = ""
         isPro = false
         isAuthenticated = false
     }
 }
-
 // MARK: - API Configuration
 struct APIConfig {
     // For simulator
