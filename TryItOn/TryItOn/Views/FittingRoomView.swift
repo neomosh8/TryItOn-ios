@@ -18,8 +18,12 @@ struct FittingRoomView: View {
     @State private var showingAddItem = false
     @State private var showingAddTemplate = false
     
+    // Canvas size for bounds calculation
+    @State private var canvasSize: CGSize = .zero
+    @State private var imageSize: CGSize = .zero
+    
     var body: some View {
-        ZStack {  // Wrap everything in a ZStack to control layering
+        ZStack {  // Main ZStack for the view
             VStack {
                 // Top slider - User uploaded items
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -39,10 +43,6 @@ struct FittingRoomView: View {
                                         .frame(width: 30, height: 30)
                                         .foregroundColor(.blue)
                                 }
-                                
-                                Text("Add Item")
-                                    .font(.caption)
-                                    .lineLimit(1)
                             }
                         }
                         
@@ -77,11 +77,10 @@ struct FittingRoomView: View {
                             .scaleEffect(2)
                             .progressViewStyle(CircularProgressViewStyle(tint: .blue))
                     } else if let image = currentResult {
-                        // The image and controls remain visible but won't be included in the ZStack that gets elevated
                         if !isZoomed {
-                            ZStack {
-                                // Result image with gesture modifiers
+                            GeometryReader { geometry in
                                 ZStack {
+                                    // Result image with gesture modifiers
                                     Image(uiImage: image)
                                         .resizable()
                                         .scaledToFit()
@@ -97,10 +96,31 @@ struct FittingRoomView: View {
                                                 }
                                                 .onEnded { _ in
                                                     self.lastScale = 1.0
-                                                    if self.scale > 1.1 {
+                                                    
+                                                    // If scale is too small, reset to 1.0
+                                                    if self.scale < 0.8 {
+                                                        withAnimation(.spring()) {
+                                                            self.scale = 1.0
+                                                            self.offset = .zero
+                                                            self.lastOffset = .zero
+                                                        }
+                                                    }
+                                                    // If scale is large, enter zoomed mode
+                                                    else if self.scale > 1.5 {
                                                         self.isZoomed = true
-                                                    } else if self.scale < 0.9 {
-                                                        self.isZoomed = false
+                                                        // Store canvas size for bounds calculation
+                                                        self.canvasSize = geometry.size
+                                                        
+                                                        // Ensure image stays in bounds
+                                                        constrainOffsetToBounds()
+                                                    }
+                                                    // For mid-range scaling, just constrain within bounds
+                                                    else {
+                                                        // Store canvas size for bounds calculation
+                                                        self.canvasSize = geometry.size
+                                                        
+                                                        // Ensure image stays in bounds
+                                                        constrainOffsetToBounds()
                                                     }
                                                 }
                                         )
@@ -115,28 +135,43 @@ struct FittingRoomView: View {
                                                     }
                                                 }
                                                 .onEnded { _ in
+                                                    // Store canvas size for bounds calculation
+                                                    self.canvasSize = geometry.size
+                                                    
+                                                    // Ensure image stays in bounds after dragging
+                                                    constrainOffsetToBounds()
                                                     self.lastOffset = self.offset
                                                 }
                                         )
                                         .onTapGesture(count: 2) {
                                             withAnimation(.spring()) {
-                                                if isZoomed {
+                                                if scale > 1.0 {
                                                     self.scale = 1.0
                                                     self.offset = .zero
                                                     self.lastOffset = .zero
-                                                    self.isZoomed = false
                                                 } else {
                                                     self.scale = 2.5
                                                     self.isZoomed = true
+                                                    // Store canvas size for bounds calculation
+                                                    self.canvasSize = geometry.size
                                                 }
                                             }
                                         }
                                         .onTapGesture {
                                             // Only navigate to result detail if we're not zoomed
-                                            if !isZoomed {
+                                            if !isZoomed && scale <= 1.0 {
                                                 showingResultDetail = true
                                             }
                                         }
+                                        .background(
+                                            GeometryReader { imageGeometry -> Color in
+                                                // Store image size for bounds calculations
+                                                DispatchQueue.main.async {
+                                                    self.imageSize = imageGeometry.size
+                                                }
+                                                return Color.clear
+                                            }
+                                        )
                                 }
                                 .overlay(
                                     // Zoom instructions indicator
@@ -222,10 +257,6 @@ struct FittingRoomView: View {
                                         .frame(width: 30, height: 30)
                                         .foregroundColor(.blue)
                                 }
-                                
-                                Text("Add Template")
-                                    .font(.caption)
-                                    .lineLimit(1)
                             }
                         }
                         
@@ -274,78 +305,6 @@ struct FittingRoomView: View {
                 .disabled(dataManager.items.isEmpty || dataManager.templates.isEmpty)
                 .padding([.horizontal, .bottom])
             }
-            
-            // Zoomed image overlay that appears on top of everything
-            if isZoomed, let image = currentResult {
-                Color.black.opacity(0.7)
-                    .edgesIgnoringSafeArea(.all)
-                    .transition(.opacity)
-                
-                VStack {
-                    HStack {
-                        Spacer()
-                        
-                        Button(action: {
-                            withAnimation(.spring()) {
-                                self.scale = 1.0
-                                self.offset = .zero
-                                self.lastOffset = .zero
-                                self.isZoomed = false
-                            }
-                        }) {
-                            Image(systemName: "xmark")
-                                .foregroundColor(.white)
-                                .padding(10)
-                                .background(Color.black.opacity(0.6))
-                                .clipShape(Circle())
-                        }
-                        .padding()
-                    }
-                    
-                    Spacer()
-                }
-
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .scaleEffect(scale)
-                    .offset(offset)
-                    .gesture(
-                        MagnificationGesture()
-                            .onChanged { value in
-                                let delta = value / self.lastScale
-                                self.lastScale = value
-                                let newScale = self.scale * delta
-                                self.scale = min(max(newScale, 0.5), 6.0)
-                            }
-                            .onEnded { _ in
-                                self.lastScale = 1.0
-                            }
-                    )
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                if scale > 1.0 {
-                                    self.offset = CGSize(
-                                        width: self.lastOffset.width + value.translation.width,
-                                        height: self.lastOffset.height + value.translation.height
-                                    )
-                                }
-                            }
-                            .onEnded { _ in
-                                self.lastOffset = self.offset
-                            }
-                    )
-                    .onTapGesture(count: 2) {
-                        withAnimation(.spring()) {
-                            self.scale = 1.0
-                            self.offset = .zero
-                            self.lastOffset = .zero
-                            self.isZoomed = false
-                        }
-                    }
-                    .transition(.opacity)
-            }
         }
         .navigationTitle("Fitting Room")
         .onAppear {
@@ -374,6 +333,126 @@ struct FittingRoomView: View {
                 dismissButton: .default(Text("OK"))
             )
         }
+        // This overlay will appear on top of everything including the TabView
+        .overlay(
+            Group {
+                if isZoomed, let image = currentResult {
+                    ZStack {
+                        // Black background
+                        Color.black
+                            .opacity(0.9)
+                            .edgesIgnoringSafeArea(.all)
+                        
+                        // Close button
+                        VStack {
+                            HStack {
+                                Spacer()
+                                
+                                Button(action: {
+                                    withAnimation(.spring()) {
+                                        self.scale = 1.0
+                                        self.offset = .zero
+                                        self.lastOffset = .zero
+                                        self.isZoomed = false
+                                    }
+                                }) {
+                                    Image(systemName: "xmark")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 20, weight: .bold))
+                                        .padding(12)
+                                        .background(Color.black.opacity(0.6))
+                                        .clipShape(Circle())
+                                }
+                                .padding(.top, 48) // Extra padding to ensure it's not under status bar
+                                .padding(.trailing, 16)
+                            }
+                            
+                            Spacer()
+                        }
+
+                        // Zoomed image
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .scaleEffect(scale)
+                            .offset(offset)
+                            .gesture(
+                                MagnificationGesture()
+                                    .onChanged { value in
+                                        let delta = value / self.lastScale
+                                        self.lastScale = value
+                                        let newScale = self.scale * delta
+                                        self.scale = min(max(newScale, 0.5), 6.0)
+                                    }
+                                    .onEnded { _ in
+                                        self.lastScale = 1.0
+                                        // Don't exit zoom mode on pinch end, just constrain bounds
+                                        constrainOffsetToBounds()
+                                    }
+                            )
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { value in
+                                        if scale > 1.0 {
+                                            self.offset = CGSize(
+                                                width: self.lastOffset.width + value.translation.width,
+                                                height: self.lastOffset.height + value.translation.height
+                                            )
+                                        }
+                                    }
+                                    .onEnded { _ in
+                                        // Ensure image stays in bounds after dragging
+                                        constrainOffsetToBounds()
+                                        self.lastOffset = self.offset
+                                    }
+                            )
+                            .onTapGesture(count: 2) {
+                                withAnimation(.spring()) {
+                                    if scale > 1.5 {
+                                        // Reset scale but stay in zoom mode
+                                        self.scale = 1.0
+                                        self.offset = .zero
+                                        self.lastOffset = .zero
+                                    } else {
+                                        // Zoom in more
+                                        self.scale = 3.0
+                                    }
+                                }
+                            }
+                    }
+                    .transition(.opacity)
+                }
+            }
+        )
+    }
+    
+    // Helper function to constrain image within bounds
+    private func constrainOffsetToBounds() {
+        guard scale > 1.0, canvasSize != .zero else {
+            // If no scaling or we don't know the canvas size, reset offset
+            if scale <= 1.0 {
+                withAnimation(.spring()) {
+                    offset = .zero
+                    lastOffset = .zero
+                }
+            }
+            return
+        }
+        
+        // Calculate the scaled image size
+        let scaledWidth = imageSize.width * scale
+        let scaledHeight = imageSize.height * scale
+        
+        // Calculate maximum allowed offset
+        let maxOffsetX = max(0, (scaledWidth - canvasSize.width) / 2)
+        let maxOffsetY = max(0, (scaledHeight - canvasSize.height) / 2)
+        
+        // Constrain offset within bounds
+        withAnimation(.spring()) {
+            offset.width = max(-maxOffsetX, min(maxOffsetX, offset.width))
+            offset.height = max(-maxOffsetY, min(maxOffsetY, offset.height))
+            lastOffset = offset
+        }
     }
     
     private func tryItOn() {
@@ -384,8 +463,8 @@ struct FittingRoomView: View {
         let selectedItem = dataManager.items[selectedItemIndex]
         let selectedTemplate = dataManager.templates[selectedTemplateIndex]
         
-        // Set flag to select first template when templates are updated
-        shouldSelectFirstTemplate = true
+        // Don't set flag to select first template anymore
+        // shouldSelectFirstTemplate = true - REMOVED
         
         dataManager.tryOnItemWithTemplate(
             itemId: selectedItem.id,
@@ -423,87 +502,76 @@ struct FittingRoomView: View {
     }
 }
 
-// Item thumbnail for the top slider (keep the original definition)
+// Item thumbnail for the top slider (MODIFIED to remove text label)
 struct ItemThumbnail: View {
     let item: Item
     let isSelected: Bool
     
     var body: some View {
-        VStack {
-            if let url = item.imageURL {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    ProgressView()
-                }
+        if let url = item.imageURL {
+            AsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                ProgressView()
+            }
+            .frame(width: 80, height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+            )
+        } else {
+            Image(systemName: "photo")
+                .resizable()
                 .frame(width: 80, height: 80)
+                .background(Color.gray.opacity(0.3))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
                 )
-            } else {
-                Image(systemName: "photo")
-                    .resizable()
-                    .frame(width: 80, height: 80)
-                    .background(Color.gray.opacity(0.3))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
-                    )
-            }
-            
-            Text(item.category.capitalized)
-                .font(.caption)
-                .lineLimit(1)
         }
     }
 }
 
-// Template thumbnail for the bottom slider (keep the original definition)
+// Template thumbnail for the bottom slider (MODIFIED to remove text label)
 struct TemplateThumbnail: View {
     let template: Template
     let isSelected: Bool
     
     var body: some View {
-        VStack {
-            if let url = template.imageURL {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    ProgressView()
-                }
+        if let url = template.imageURL {
+            AsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                ProgressView()
+            }
+            .frame(width: 80, height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
+            )
+        } else {
+            Image(systemName: "person.crop.rectangle")
+                .resizable()
                 .frame(width: 80, height: 80)
+                .background(Color.gray.opacity(0.3))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
                 )
-            } else {
-                Image(systemName: "person.crop.rectangle")
-                    .resizable()
-                    .frame(width: 80, height: 80)
-                    .background(Color.gray.opacity(0.3))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 3)
-                    )
-            }
-            
-            Text(template.category.capitalized)
-                .font(.caption)
-                .lineLimit(1)
         }
     }
 }
+// Add this struct to the end of your FittingRoomView.swift file
 
-// New view for displaying result details when tapping on an image
+// Result detail view when tapping on an image
 struct FittingRoomResultView: View {
     let resultImage: UIImage
     let item: Item

@@ -462,9 +462,6 @@ class DataManager: ObservableObject {
                             return
                         }
                         
-                        // Get the category for the template
-                        let category = self?.templates.first(where: { $0.id == templateId })?.category ?? "general"
-                        
                         // Download the result image
                         URLSession.shared.dataTask(with: url) { data, response, error in
                             DispatchQueue.main.async {
@@ -478,16 +475,14 @@ class DataManager: ObservableObject {
                                     return
                                 }
                                 
-                                // First return the image for immediate display
+                                // Return the image for immediate display
                                 completion(.success(image))
                                 
                                 // Update results after trying on
                                 self?.fetchResults()
                                 
-                                // Now also save this result as a new template
-                                self?.saveResultAsTemplate(image: image, category: category) { _ in
-                                    // Templates list will be updated automatically in saveResultAsTemplate
-                                }
+                                // REMOVED: The code that saves the result as a template
+                                // This prevents adding a new template for each result
                             }
                         }.resume()
                     } catch {
