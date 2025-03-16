@@ -16,9 +16,14 @@
 				<string>com.googleusercontent.apps.172249664383-g5nivsbi979cl6e9kij2p29a5ag17307</string>
 			</array>
 			<key>GIDClientID</key>
-			<string></string>
+			<string>172249664383-g5nivsbi979cl6e9kij2p29a5ag17307</string>
 		</dict>
 		<dict/>
 	</array>
+	<key>StoreKit</key>
+	<dict>
+		<key>Auto-Sync Purchase History</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

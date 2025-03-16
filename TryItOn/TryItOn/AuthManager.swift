@@ -61,7 +61,17 @@ class AuthManager: NSObject, ObservableObject {
             appLogger.log("No username found in UserDefaults")
         }
     }
-    
+    func updateFromSubscriptionManager(_ isSubscribed: Bool) {
+        if isSubscribed != self.isPro {
+            self.isPro = isSubscribed
+            UserDefaults.standard.set(isSubscribed, forKey: "isPro")
+            
+            // Update shared container
+            let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
+            userDefaults?.set(isSubscribed, forKey: "isPro")
+            userDefaults?.synchronize()
+        }
+    }
     func login(username: String, isPro: Bool) {
         appLogger.log("Logging in with username: \(username), isPro: \(isPro)")
         self.username = username
@@ -326,6 +336,26 @@ class AuthManager: NSObject, ObservableObject {
         
         return result
     }
+    
+    func updateSubscriptionStatus(isActive: Bool) {
+        self.isPro = isActive
+        
+        // Save to UserDefaults
+        UserDefaults.standard.set(isActive, forKey: "isPro")
+        
+        // Save to shared container
+        let userDefaults = UserDefaults(suiteName: "group.com.neocore.tech.TryItOn")
+        userDefaults?.set(isActive, forKey: "isPro")
+        userDefaults?.synchronize()
+        
+        // Register update with server
+        registerWithServer(
+            username: self.username,
+            isPro: isActive,
+            provider: self.authProvider.rawValue,
+            email: self.email
+        )
+    }
 }
 
 // MARK: - Apple Sign In Delegates
@@ -387,3 +417,4 @@ extension AuthManager: ASAuthorizationControllerDelegate, ASAuthorizationControl
         appLogger.error("Apple Sign In error: \(error.localizedDescription)")
     }
 }
+

@@ -10,6 +10,9 @@
 		687854012D85EDB400CA3063 /* TryItOnShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 687853F72D85EDB400CA3063 /* TryItOnShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		6878546E2D86631100CA3063 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 6878546D2D86631100CA3063 /* GoogleSignIn */; };
 		687854702D86631100CA3063 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 6878546F2D86631100CA3063 /* GoogleSignInSwift */; };
+		687854812D87853C00CA3063 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 687854802D87853C00CA3063 /* StoreKit.framework */; };
+		687854832D8786E900CA3063 /* Subscriptions.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 687854822D8786E900CA3063 /* Subscriptions.storekit */; };
+		687854842D8786E900CA3063 /* Subscriptions.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 687854822D8786E900CA3063 /* Subscriptions.storekit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,6 +42,8 @@
 /* Begin PBXFileReference section */
 		687853BE2D85E9F900CA3063 /* TryItOn.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TryItOn.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		687853F72D85EDB400CA3063 /* TryItOnShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TryItOnShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		687854802D87853C00CA3063 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		687854822D8786E900CA3063 /* Subscriptions.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Subscriptions.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -91,6 +96,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6878546E2D86631100CA3063 /* GoogleSignIn in Frameworks */,
+				687854812D87853C00CA3063 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,8 +114,10 @@
 		687853B52D85E9F900CA3063 = {
 			isa = PBXGroup;
 			children = (
+				687854822D8786E900CA3063 /* Subscriptions.storekit */,
 				687853C02D85E9F900CA3063 /* TryItOn */,
 				687853F82D85EDB400CA3063 /* TryItOnShare */,
+				6878547F2D87853C00CA3063 /* Frameworks */,
 				687853BF2D85E9F900CA3063 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -121,6 +129,14 @@
 				687853F72D85EDB400CA3063 /* TryItOnShare.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6878547F2D87853C00CA3063 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				687854802D87853C00CA3063 /* StoreKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -220,6 +236,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				687854832D8786E900CA3063 /* Subscriptions.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,6 +244,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				687854842D8786E900CA3063 /* Subscriptions.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -390,6 +408,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TryItOn/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "TryItOn needs permission to save try-on images to your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -422,6 +441,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TryItOn/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "TryItOn needs permission to save try-on images to your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

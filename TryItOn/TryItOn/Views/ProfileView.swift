@@ -1,8 +1,11 @@
 import SwiftUI
+import StoreKit
 
 struct ProfileView: View {
     @EnvironmentObject var authManager: AuthManager
-    @State private var showingProUpgradeAlert = false
+    @StateObject private var subscriptionManager = SubscriptionManager()
+    @State private var showingSubscriptionView = false
+    @State private var showingLogoutAlert = false
     
     var body: some View {
         NavigationView {
@@ -36,18 +39,24 @@ struct ProfileView: View {
                                 .foregroundColor(.gray)
                         }
                         
-                        HStack {
+                        // Subscription status
+                        HStack(spacing: 8) {
                             Text("Account Type:")
                                 .font(.subheadline)
                             
-                            Text(authManager.isPro ? "Pro" : "Standard")
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                                .foregroundColor(authManager.isPro ? .blue : .gray)
-                            
-                            if !authManager.isPro {
+                            if subscriptionManager.isSubscriptionActive {
+                                Label("Pro", systemImage: "checkmark.seal.fill")
+                                    .font(.subheadline)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.blue)
+                            } else {
+                                Text("Standard")
+                                    .font(.subheadline)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.gray)
+                                
                                 Button(action: {
-                                    showingProUpgradeAlert = true
+                                    showingSubscriptionView = true
                                 }) {
                                     Text("Upgrade")
                                         .font(.caption)
@@ -61,6 +70,14 @@ struct ProfileView: View {
                             }
                         }
                         .padding(.top, 5)
+                        
+                        // Show subscription expiration if applicable
+                        if subscriptionManager.isSubscriptionActive, let expirationDate = subscriptionManager.expirationDate {
+                            Text("Renews \(expirationDate, formatter: dateFormatter)")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .padding(.top, 2)
+                        }
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
@@ -81,7 +98,40 @@ struct ProfileView: View {
                             Divider().padding(.leading)
                             InfoRow(title: "Sign-in Method", value: authProvider)
                             Divider().padding(.leading)
-                            InfoRow(title: "Account Type", value: authManager.isPro ? "Pro" : "Standard")
+                            InfoRow(title: "Account Type", value: subscriptionManager.isSubscriptionActive ? "Pro" : "Standard")
+                            
+                            if subscriptionManager.isSubscriptionActive {
+                                Divider().padding(.leading)
+                                Button(action: {
+                                    // Open subscription management in Settings
+                                    if let url = URL(string: "App-Prefs:root=STORE") {
+                                        UIApplication.shared.open(url)
+                                    }
+                                }) {
+                                    HStack {
+                                        Text("Manage Subscription")
+                                            .foregroundColor(.blue)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding()
+                                }
+                            } else {
+                                Divider().padding(.leading)
+                                Button(action: {
+                                    showingSubscriptionView = true
+                                }) {
+                                    HStack {
+                                        Text("Upgrade to Pro")
+                                            .foregroundColor(.blue)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding()
+                                }
+                            }
                         }
                         .background(Color(.systemBackground))
                         .cornerRadius(10)
@@ -127,6 +177,28 @@ struct ProfileView: View {
                                 }
                                 .padding()
                             }
+                            
+                            if subscriptionManager.isSubscriptionActive {
+                                Divider().padding(.leading)
+                                Button(action: {
+                                    Task {
+                                        await subscriptionManager.restorePurchases()
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.clockwise")
+                                            .foregroundColor(.blue)
+                                            .frame(width: 25)
+                                        Text("Restore Purchases")
+                                        Spacer()
+                                        if subscriptionManager.isLoading {
+                                            ProgressView()
+                                                .scaleEffect(0.7)
+                                        }
+                                    }
+                                    .padding()
+                                }
+                            }
                         }
                         .background(Color(.systemBackground))
                         .cornerRadius(10)
@@ -139,7 +211,7 @@ struct ProfileView: View {
                     
                     // Sign out button
                     Button(action: {
-                        authManager.logout()
+                        showingLogoutAlert = true
                     }) {
                         HStack {
                             Spacer()
@@ -166,18 +238,31 @@ struct ProfileView: View {
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
-            .alert(isPresented: $showingProUpgradeAlert) {
+            .sheet(isPresented: $showingSubscriptionView) {
+                NavigationView {
+                    SubscriptionView()
+                        .environmentObject(subscriptionManager)
+                }
+            }
+            .alert(isPresented: $showingLogoutAlert) {
                 Alert(
-                    title: Text("Upgrade to Pro"),
-                    message: Text("Pro accounts get access to all template categories and priority support."),
-                    primaryButton: .default(Text("Upgrade")) {
-                        // Handle upgrade logic here
-                        // For demo purposes, we'll just toggle the isPro flag
-                        UserDefaults.standard.set(true, forKey: "isPro")
-                        authManager.isPro = true
+                    title: Text("Sign Out"),
+                    message: Text("Are you sure you want to sign out?"),
+                    primaryButton: .destructive(Text("Sign Out")) {
+                        authManager.logout()
                     },
                     secondaryButton: .cancel()
                 )
+            }
+            .onAppear {
+                // Update subscription status when view appears
+                Task {
+                    await subscriptionManager.updateSubscriptionStatus()
+                    // Keep AuthManager in sync with subscription status
+                    DispatchQueue.main.async {
+                        authManager.isPro = subscriptionManager.isSubscriptionActive
+                    }
+                }
             }
         }
     }
@@ -193,9 +278,17 @@ struct ProfileView: View {
             return "Apple"
         }
     }
+    
+    // Date formatter for subscription expiration
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
 }
 
-// Info row component
+// Keep the existing InfoRow struct
 struct InfoRow: View {
     let title: String
     let value: String

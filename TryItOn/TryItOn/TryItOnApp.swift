@@ -52,6 +52,13 @@ struct ContentView: View {
         .onAppear {
             // Connect managers and check for saved login
             connectManagers()
+            let subscriptionManager = SubscriptionManager()
+            Task {
+                await subscriptionManager.updateSubscriptionStatus()
+                DispatchQueue.main.async {
+                    authManager.updateFromSubscriptionManager(subscriptionManager.isSubscriptionActive)
+                }
+            }
             authManager.checkSavedLogin()
         }
     }
