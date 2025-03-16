@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		687854012D85EDB400CA3063 /* TryItOnShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 687853F72D85EDB400CA3063 /* TryItOnShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		6878546E2D86631100CA3063 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 6878546D2D86631100CA3063 /* GoogleSignIn */; };
+		687854702D86631100CA3063 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 6878546F2D86631100CA3063 /* GoogleSignInSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,11 +49,21 @@
 			);
 			target = 687853F62D85EDB400CA3063 /* TryItOnShare */;
 		};
+		687854742D8663C100CA3063 /* Exceptions for "TryItOn" folder in "TryItOnShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"client_172249664383-g5nivsbi979cl6e9kij2p29a5ag17307.apps.googleusercontent.com.plist",
+			);
+			target = 687853F62D85EDB400CA3063 /* TryItOnShare */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		687853C02D85E9F900CA3063 /* TryItOn */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				687854742D8663C100CA3063 /* Exceptions for "TryItOn" folder in "TryItOnShare" target */,
+			);
 			path = TryItOn;
 			sourceTree = "<group>";
 		};
@@ -70,6 +82,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6878546E2D86631100CA3063 /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,6 +90,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				687854702D86631100CA3063 /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -123,6 +137,7 @@
 			);
 			name = TryItOn;
 			packageProductDependencies = (
+				6878546D2D86631100CA3063 /* GoogleSignIn */,
 			);
 			productName = TryItOn;
 			productReference = 687853BE2D85E9F900CA3063 /* TryItOn.app */;
@@ -145,6 +160,7 @@
 			);
 			name = TryItOnShare;
 			packageProductDependencies = (
+				6878546F2D86631100CA3063 /* GoogleSignInSwift */,
 			);
 			productName = TryItOnShare;
 			productReference = 687853F72D85EDB400CA3063 /* TryItOnShare.appex */;
@@ -177,6 +193,9 @@
 			);
 			mainGroup = 687853B52D85E9F900CA3063;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6878546C2D86631100CA3063 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 687853BF2D85E9F900CA3063 /* Products */;
 			projectDirPath = "";
@@ -495,6 +514,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6878546C2D86631100CA3063 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6878546D2D86631100CA3063 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6878546C2D86631100CA3063 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		6878546F2D86631100CA3063 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6878546C2D86631100CA3063 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 687853B62D85E9F900CA3063 /* Project object */;
 }
