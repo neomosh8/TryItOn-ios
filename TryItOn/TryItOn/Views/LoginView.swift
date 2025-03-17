@@ -4,8 +4,6 @@ import GoogleSignIn
 
 struct LoginView: View {
     @EnvironmentObject var authManager: AuthManager
-    @State private var username: String = ""
-    @State private var isPro: Bool = false
     @State private var isLoading = false
     @State private var errorMessage: String?
     
@@ -38,8 +36,14 @@ struct LoginView: View {
                 .padding(.top, 40)
                 
                 // Description text with enhanced styling
-                Text("Create your perfect look - virtually!")
-                    .font(.system(size: 18, weight: .medium))
+                Text("Try It Before You Buy It")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(Color(hex: "666666"))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                // Description text with enhanced styling
+                Text("so you save money for what actually looks good on you!")
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundColor(Color(hex: "666666"))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
@@ -49,80 +53,21 @@ struct LoginView: View {
                 
                 // Auth options with feminine styling
                 VStack(spacing: 24) {
-                    // Traditional sign-in with updated styling
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Get started")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundColor(Color(hex: "333333"))
-                            .padding(.horizontal)
-                        
-                        // Username field with updated styling
-                        TextField("Username", text: $username)
-                            .padding()
-                            .background(AppTheme.cardBackground)
-                            .cornerRadius(AppTheme.cornerRadius)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                                    .stroke(Color(hex: "ffcfe1"), lineWidth: 1)
-                            )
-                            .padding(.horizontal)
-                        
-                        // Pro account toggle with updated styling
-                        Toggle(isOn: $isPro) {
-                            HStack {
-                                Text("Pro Account")
-                                    .foregroundColor(Color(hex: "333333"))
-                                
-                                Image(systemName: "sparkles")
-                                    .foregroundColor(AppTheme.secondaryColor)
-                                    .font(.system(size: 14))
-                            }
-                        }
-                        .toggleStyle(SwitchToggleStyle(tint: AppTheme.accentColor))
-                        .padding(.horizontal)
-                        
-                        // Continue button with updated styling
-                        Button(action: {
-                            isLoading = true
-                            authManager.login(username: username, isPro: isPro)
-                            isLoading = false
-                        }) {
-                            HStack {
-                                if isLoading {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                }
-                                Text("Continue")
-                                    .fontWeight(.semibold)
-                                Spacer()
-                                Image(systemName: "arrow.right")
-                            }
-                            .padding()
-                            .foregroundColor(.white)
-                            .background(username.isEmpty ? Color.gray : AppTheme.accentColor)
-                            .cornerRadius(AppTheme.buttonCornerRadius)
-                            .shadow(color: username.isEmpty ? Color.clear : AppTheme.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
-                        }
-                        .disabled(username.isEmpty || isLoading)
-                        .padding(.horizontal)
-                    }
-                    .padding(.vertical)
+                    // Sign in header
+                    Text("Sign in to continue")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(Color(hex: "333333"))
                     
-                    // Divider with text - styled more elegantly
-                    HStack {
-                        VStack { Divider().background(Color(hex: "ffcfe1")) }.padding(.horizontal)
-                        Text("or continue with").foregroundColor(Color(hex: "999999")).font(.system(size: 14))
-                        VStack { Divider().background(Color(hex: "ffcfe1")) }.padding(.horizontal)
-                    }
-                    
-                    // Sign in with Apple button - maintained but with consistent styling
+                    // Sign in with Apple button
                     SignInWithAppleButton(
                         .signIn,
                         onRequest: { _ in
                             // Clear any error message
                             errorMessage = nil
+                            isLoading = true
                         },
                         onCompletion: { result in
+                            isLoading = false
                             switch result {
                             case .success(_):
                                 // The actual authentication is handled in AuthManager
@@ -140,17 +85,20 @@ struct LoginView: View {
                         authManager.loginWithApple()
                     }
                     
-                    // Sign in with Google button - updated styling
+                    // Sign in with Google button
                     Button(action: {
+                        isLoading = true
                         authManager.loginWithGoogle()
                     }) {
                         HStack {
-                            Image("google_logo") // Add this image to your assets
+                            Image("google_logo")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 20, height: 20)
+                            
                             Text("Sign in with Google")
                                 .fontWeight(.medium)
+                            
                             Spacer()
                         }
                         .padding()
@@ -167,12 +115,20 @@ struct LoginView: View {
                     .padding(.horizontal)
                 }
                 
+                // Loading indicator
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: AppTheme.accentColor))
+                        .scaleEffect(1.5)
+                        .padding()
+                }
+                
                 // Error message - styled for better visibility
                 if let errorMessage = errorMessage {
                     Text(errorMessage)
-                        .foregroundColor(Color.red)
+                        .foregroundColor(Color.white)
                         .padding()
-                        .background(Color.red.opacity(0.1))
+                        .background(Color.red.opacity(0.8))
                         .cornerRadius(AppTheme.cornerRadius)
                         .padding(.horizontal)
                 }
