@@ -2,7 +2,7 @@ import StoreKit
 import Combine
 
 enum SubscriptionTier: String, Identifiable, CaseIterable {
-    case pro = "neocore.TryItOn.subscription.pro"
+    case pro = "neocore.TryItOn.pro.monthly1"
     
     var id: String { rawValue }
     var displayName: String {

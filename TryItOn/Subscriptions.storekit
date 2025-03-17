@@ -18,6 +18,8 @@
   ],
   "settings" : {
     "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
     "_storeKitErrors" : [
       {
         "current" : null,
@@ -97,9 +99,9 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "neocore.TryItOn.subscription.pro",
+          "productID" : "neocore.TryItOn.pro.monthly1",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "neocore.TryItOn.subscription.pro",
+          "referenceName" : "tryiton",
           "subscriptionGroupID" : "20E30A40",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
