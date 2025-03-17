@@ -1,3 +1,4 @@
+// In AddItemView.swift - Simplified version
 import SwiftUI
 
 struct AddItemView: View {
@@ -6,11 +7,9 @@ struct AddItemView: View {
     @State private var isShowingImagePicker = false
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var selectedImage: UIImage?
-    @State private var itemName = ""
-    @State private var itemCategory: ItemCategory = .clothing
-    @State private var showCameraOptions = false
-    @State private var showSuccessAlert = false
-    @State private var alertMessage = ""
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
@@ -20,61 +19,7 @@ struct AddItemView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Item Details Section
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Item Details")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(Color(hex: "333333"))
-                                .padding(.horizontal)
-                            
-                            // Item name field
-                            TextField("Item Name (optional)", text: $itemName)
-                                .padding()
-                                .background(AppTheme.cardBackground)
-                                .cornerRadius(AppTheme.cornerRadius)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                                        .stroke(Color(hex: "ffcfe1"), lineWidth: 1)
-                                )
-                                .padding(.horizontal)
-                            
-                            // Category picker with updated styling
-                            Menu {
-                                ForEach(ItemCategory.allCases) { category in
-                                    Button(action: {
-                                        itemCategory = category
-                                    }) {
-                                        HStack {
-                                            Text(category.displayName)
-                                            if itemCategory == category {
-                                                Image(systemName: "checkmark")
-                                                    .foregroundColor(AppTheme.accentColor)
-                                            }
-                                        }
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    Text("Category: \(itemCategory.displayName)")
-                                        .foregroundColor(Color(hex: "333333"))
-                                    Spacer()
-                                    Image(systemName: "chevron.down")
-                                        .foregroundColor(AppTheme.accentColor)
-                                        .font(.system(size: 14, weight: .semibold))
-                                }
-                                .padding()
-                                .background(AppTheme.cardBackground)
-                                .cornerRadius(AppTheme.cornerRadius)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                                        .stroke(Color(hex: "ffcfe1"), lineWidth: 1)
-                                )
-                            }
-                            .padding(.horizontal)
-                        }
-                        .padding(.vertical, 8)
-                        
+                    VStack(spacing: 24) {
                         // Upload from Device Section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Upload from Device")
@@ -83,7 +28,7 @@ struct AddItemView: View {
                                 .padding(.horizontal)
                             
                             Button(action: {
-                                showCameraOptions = true
+                                isShowingImagePicker = true
                             }) {
                                 HStack {
                                     Image(systemName: "camera.fill")
@@ -115,14 +60,7 @@ struct AddItemView: View {
                                         .padding(.horizontal)
                                     
                                     Button(action: {
-                                        dataManager.uploadItemFromImage(image: image, category: itemCategory) { success, message in
-                                            self.alertMessage = message
-                                            self.showSuccessAlert = true
-                                            if success {
-                                                selectedImage = nil
-                                                itemName = ""
-                                            }
-                                        }
+                                        uploadImageAndDismiss(image)
                                     }) {
                                         Text("Upload Item")
                                             .fontWeight(.semibold)
@@ -159,32 +97,10 @@ struct AddItemView: View {
                                 )
                                 .padding(.horizontal)
                             
-                            // URL examples with updated styling
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Examples:")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(AppTheme.secondaryColor)
-                                Text("• Instagram: https://www.instagram.com/p/ABC123/")
-                                    .font(.caption)
-                                    .foregroundColor(Color(hex: "666666"))
-                                Text("• TikTok: https://www.tiktok.com/@user/video/123456")
-                                    .font(.caption)
-                                    .foregroundColor(Color(hex: "666666"))
-                            }
-                            .padding(.horizontal)
-                            .padding(.top, 4)
-                            
                             // Upload button
                             Button(action: {
                                 if !urlString.isEmpty {
-                                    dataManager.uploadItemFromURL(url: urlString, category: itemCategory) { success, message in
-                                        self.alertMessage = message
-                                        self.showSuccessAlert = true
-                                        if success {
-                                            urlString = ""
-                                            itemName = ""
-                                        }
-                                    }
+                                    uploadURLAndDismiss(urlString)
                                 }
                             }) {
                                 Text("Upload from URL")
@@ -227,7 +143,7 @@ struct AddItemView: View {
                         }
                         
                         // Error display
-                        if let error = dataManager.error {
+                        if let error = errorMessage {
                             Text(error)
                                 .foregroundColor(.white)
                                 .padding()
@@ -244,33 +160,48 @@ struct AddItemView: View {
             .sheet(isPresented: $isShowingImagePicker) {
                 ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
             }
-            .actionSheet(isPresented: $showCameraOptions) {
-                ActionSheet(
-                    title: Text("Select Photo Source"),
-                    message: Text("Choose where to get your item photo from"),
-                    buttons: [
-                        .default(Text("Camera")) {
-                            sourceType = .camera
-                            isShowingImagePicker = true
-                        },
-                        .default(Text("Photo Library")) {
-                            sourceType = .photoLibrary
-                            isShowingImagePicker = true
-                        },
-                        .cancel()
-                    ]
-                )
-            }
-            .alert(isPresented: $showSuccessAlert) {
-                Alert(
-                    title: Text("Item Upload"),
-                    message: Text(alertMessage),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
             .onAppear {
                 // Fetch existing items when view appears
                 dataManager.fetchItems()
+            }
+        }
+    }
+    
+    // New helper functions
+    private func uploadImageAndDismiss(_ image: UIImage) {
+        // Always use clothing category as default
+        let defaultCategory = ItemCategory.clothing
+        isLoading = true
+        
+        dataManager.uploadItemFromImage(image: image, category: defaultCategory) { success, message in
+            self.isLoading = false
+            if success {
+                // Auto-dismiss on success
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.dismiss()
+                }
+            } else {
+                // Show error if failed
+                self.errorMessage = message
+            }
+        }
+    }
+    
+    private func uploadURLAndDismiss(_ url: String) {
+        // Always use clothing category as default
+        let defaultCategory = ItemCategory.clothing
+        isLoading = true
+        
+        dataManager.uploadItemFromURL(url: url, category: defaultCategory) { success, message in
+            self.isLoading = false
+            if success {
+                // Auto-dismiss on success
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.dismiss()
+                }
+            } else {
+                // Show error if failed
+                self.errorMessage = message
             }
         }
     }

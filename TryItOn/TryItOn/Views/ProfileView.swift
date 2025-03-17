@@ -15,14 +15,14 @@ struct ProfileView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 20) {
-                        // Profile header with photo - enhanced styling
+                    VStack(spacing: 24) {
+                        // Profile header with photo - improved sizing and layout
                         VStack {
                             if let profileImage = authManager.profileImage {
                                 Image(uiImage: profileImage)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: 110, height: 110)
+                                    .frame(width: 100, height: 100)
                                     .clipShape(Circle())
                                     .overlay(Circle().stroke(AppTheme.accentColor, lineWidth: 3))
                                     .shadow(color: AppTheme.shadowColor, radius: 8, x: 0, y: 4)
@@ -30,19 +30,19 @@ struct ProfileView: View {
                                 ZStack {
                                     Circle()
                                         .fill(AppTheme.cardBackground)
-                                        .frame(width: 110, height: 110)
+                                        .frame(width: 100, height: 100)
                                         .shadow(color: AppTheme.shadowColor, radius: 8, x: 0, y: 4)
                                     
                                     Image(systemName: "person.crop.circle.fill")
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(width: 80, height: 80)
+                                        .frame(width: 70, height: 70)
                                         .foregroundColor(AppTheme.accentColor)
                                 }
                             }
                             
                             Text(authManager.username)
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(Color(hex: "333333"))
                                 .padding(.top, 8)
                             
@@ -77,7 +77,7 @@ struct ProfileView: View {
                                     }
                                 }
                             }
-                            .padding(.top, 8)
+                            .padding(.top, 12)
                             
                             // Show subscription expiration if applicable
                             if subscriptionManager.isSubscriptionActive, let expirationDate = subscriptionManager.expirationDate {
@@ -87,7 +87,8 @@ struct ProfileView: View {
                                     .padding(.top, 4)
                             }
                         }
-                        .padding(24)
+                        .padding(20)
+                        .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
                                 .fill(Color.white)
@@ -95,7 +96,7 @@ struct ProfileView: View {
                         )
                         .padding(.horizontal)
                         
-                        // Account info section with updated styling
+                        // Account info section with fixed width for rows
                         VStack(alignment: .leading, spacing: 0) {
                             Text("ACCOUNT INFORMATION")
                                 .font(.system(size: 14, weight: .semibold))
@@ -105,14 +106,14 @@ struct ProfileView: View {
                             
                             VStack(spacing: 0) {
                                 InfoRow(title: "Username", value: authManager.username, iconName: "person.fill")
-                                Divider().padding(.leading, 60)
+                                Divider().padding(.horizontal)
                                 InfoRow(title: "Sign-in Method", value: authProvider, iconName: "lock.fill")
-                                Divider().padding(.leading, 60)
+                                Divider().padding(.horizontal)
                                 InfoRow(title: "Account Type", value: subscriptionManager.isSubscriptionActive ? "Pro" : "Standard",
                                        iconName: subscriptionManager.isSubscriptionActive ? "star.fill" : "star")
                                 
                                 if subscriptionManager.isSubscriptionActive {
-                                    Divider().padding(.leading, 60)
+                                    Divider().padding(.horizontal)
                                     Button(action: {
                                         // Open subscription management in Settings
                                         if let url = URL(string: "App-Prefs:root=STORE") {
@@ -123,7 +124,6 @@ struct ProfileView: View {
                                             Image(systemName: "creditcard.fill")
                                                 .foregroundColor(AppTheme.secondaryColor)
                                                 .frame(width: 24)
-                                                .padding(.leading, 16)
                                             
                                             Text("Manage Subscription")
                                                 .foregroundColor(Color(hex: "333333"))
@@ -132,10 +132,11 @@ struct ProfileView: View {
                                                 .foregroundColor(Color(hex: "999999"))
                                                 .font(.system(size: 14))
                                         }
+                                        .padding(.horizontal, 16)
                                         .padding(.vertical, 16)
                                     }
                                 } else {
-                                    Divider().padding(.leading, 60)
+                                    Divider().padding(.horizontal)
                                     Button(action: {
                                         showingSubscriptionView = true
                                     }) {
@@ -143,7 +144,6 @@ struct ProfileView: View {
                                             Image(systemName: "crown.fill")
                                                 .foregroundColor(AppTheme.accentColor)
                                                 .frame(width: 24)
-                                                .padding(.leading, 16)
                                             
                                             Text("Upgrade to Pro")
                                                 .foregroundColor(Color(hex: "333333"))
@@ -152,6 +152,7 @@ struct ProfileView: View {
                                                 .foregroundColor(Color(hex: "999999"))
                                                 .font(.system(size: 14))
                                         }
+                                        .padding(.horizontal, 16)
                                         .padding(.vertical, 16)
                                     }
                                 }
@@ -162,7 +163,7 @@ struct ProfileView: View {
                         }
                         .padding(.horizontal)
                         
-                        // Privacy section with updated styling
+                        // Privacy section with fixed width for rows
                         VStack(alignment: .leading, spacing: 0) {
                             Text("PRIVACY & SUPPORT")
                                 .font(.system(size: 14, weight: .semibold))
@@ -171,12 +172,12 @@ struct ProfileView: View {
                                 .padding(.bottom, 5)
                             
                             VStack(spacing: 0) {
-                                NavigationLink(destination: Text("Privacy Settings")) {
+                                // Privacy Settings
+                                NavigationLink(destination: PrivacySettingsView()) {
                                     HStack {
                                         Image(systemName: "lock.shield.fill")
                                             .foregroundColor(AppTheme.secondaryColor)
                                             .frame(width: 24)
-                                            .padding(.leading, 16)
                                         
                                         Text("Privacy Settings")
                                             .foregroundColor(Color(hex: "333333"))
@@ -185,15 +186,38 @@ struct ProfileView: View {
                                             .foregroundColor(Color(hex: "999999"))
                                             .font(.system(size: 14))
                                     }
+                                    .padding(.horizontal, 16)
                                     .padding(.vertical, 16)
                                 }
-                                Divider().padding(.leading, 60)
-                                NavigationLink(destination: Text("Terms and Conditions")) {
+                                
+                                Divider().padding(.horizontal)
+                                
+                                // Privacy Policy
+                                NavigationLink(destination: TermsAndPrivacyView(documentType: .privacy)) {
+                                    HStack {
+                                        Image(systemName: "hand.raised.fill")
+                                            .foregroundColor(AppTheme.secondaryColor)
+                                            .frame(width: 24)
+                                        
+                                        Text("Privacy Policy")
+                                            .foregroundColor(Color(hex: "333333"))
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(Color(hex: "999999"))
+                                            .font(.system(size: 14))
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 16)
+                                }
+                                
+                                Divider().padding(.horizontal)
+                                
+                                // Terms of Service
+                                NavigationLink(destination: TermsAndPrivacyView(documentType: .terms)) {
                                     HStack {
                                         Image(systemName: "doc.text.fill")
                                             .foregroundColor(AppTheme.secondaryColor)
                                             .frame(width: 24)
-                                            .padding(.leading, 16)
                                         
                                         Text("Terms and Conditions")
                                             .foregroundColor(Color(hex: "333333"))
@@ -202,11 +226,12 @@ struct ProfileView: View {
                                             .foregroundColor(Color(hex: "999999"))
                                             .font(.system(size: 14))
                                     }
+                                    .padding(.horizontal, 16)
                                     .padding(.vertical, 16)
                                 }
                                 
                                 if subscriptionManager.isSubscriptionActive {
-                                    Divider().padding(.leading, 60)
+                                    Divider().padding(.horizontal)
                                     Button(action: {
                                         Task {
                                             await subscriptionManager.restorePurchases()
@@ -216,7 +241,6 @@ struct ProfileView: View {
                                             Image(systemName: "arrow.clockwise")
                                                 .foregroundColor(AppTheme.secondaryColor)
                                                 .frame(width: 24)
-                                                .padding(.leading, 16)
                                             
                                             Text("Restore Purchases")
                                                 .foregroundColor(Color(hex: "333333"))
@@ -227,6 +251,7 @@ struct ProfileView: View {
                                                     .tint(AppTheme.accentColor)
                                             }
                                         }
+                                        .padding(.horizontal, 16)
                                         .padding(.vertical, 16)
                                     }
                                 }
@@ -322,7 +347,7 @@ struct ProfileView: View {
     }()
 }
 
-// Updated InfoRow with icon
+// Updated InfoRow with better padding and layout
 struct InfoRow: View {
     let title: String
     let value: String
@@ -333,7 +358,6 @@ struct InfoRow: View {
             Image(systemName: iconName)
                 .foregroundColor(AppTheme.secondaryColor)
                 .frame(width: 24)
-                .padding(.leading, 16)
             
             Text(title)
                 .foregroundColor(Color(hex: "666666"))
@@ -342,6 +366,7 @@ struct InfoRow: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(Color(hex: "333333"))
         }
+        .padding(.horizontal, 16)
         .padding(.vertical, 16)
     }
 }

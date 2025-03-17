@@ -5,10 +5,10 @@ struct TemplatesView: View {
     @State private var isShowingImagePicker = false
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
     @State private var selectedImage: UIImage?
-    @State private var selectedCategory: ItemCategory = .general
-    @State private var isShowingCategoryPicker = false
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var isLoading = false
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
@@ -58,7 +58,7 @@ struct TemplatesView: View {
                     }
                 }
                 
-                if dataManager.isLoading {
+                if isLoading || dataManager.isLoading {
                     ZStack {
                         Color.black.opacity(0.2)
                             .ignoresSafeArea()
@@ -99,8 +99,9 @@ struct TemplatesView: View {
                 ImagePicker(selectedImage: $selectedImage, sourceType: sourceType)
             }
             .onChange(of: selectedImage) { newImage in
-                if newImage != nil {
-                    isShowingCategoryPicker = true
+                if let image = newImage {
+                    // Automatically upload with default category
+                    uploadTemplateAndDismiss(image)
                 }
             }
             .alert(isPresented: $showAlert) {
@@ -110,33 +111,47 @@ struct TemplatesView: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
-            .actionSheet(isPresented: $isShowingCategoryPicker) {
-                ActionSheet(
-                    title: Text("Select Template Category"),
-                    buttons: ItemCategory.allCases.map { category in
-                        .default(Text(category.displayName)) {
-                            uploadTemplate(category: category)
-                        }
-                    } + [.cancel()]
-                )
+        }
+    }
+    
+    private func uploadTemplateAndDismiss(_ image: UIImage) {
+        // Always use general category as default
+        let defaultCategory = ItemCategory.general
+        isLoading = true
+        
+        dataManager.uploadTemplate(image: image, category: defaultCategory) { success, message in
+            isLoading = false
+            
+            if success {
+                // Show success message briefly
+                alertMessage = "Model uploaded successfully!"
+                showAlert = true
+                
+                // Reset image selection
+                selectedImage = nil
+                
+                // Refresh templates
+                dataManager.fetchTemplates()
+                
+                // If this was opened as a sheet, dismiss it
+                if presentationMode.wrappedValue.isPresented {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        dismiss()
+                    }
+                }
+            } else {
+                // Show error alert
+                alertMessage = message
+                showAlert = true
             }
         }
     }
     
-    private func uploadTemplate(category: ItemCategory) {
-        if let image = selectedImage {
-            dataManager.uploadTemplate(image: image, category: category, completion: { success, message in
-                self.alertMessage = message
-                self.showAlert = true
-                if success {
-                    self.selectedImage = nil
-                }
-            })
-        }
-    }
+    // Add presentationMode for checking if view is presented
+    @Environment(\.presentationMode) var presentationMode
 }
 
-// Updated TemplateRow as a grid item with enhanced styling
+// Template grid item - no changes needed here
 struct TemplateGridItem: View {
     let template: Template
     
@@ -181,53 +196,5 @@ struct TemplateGridItem: View {
             .padding(.horizontal, 4)
             .padding(.bottom, 8)
         }
-    }
-}
-
-// Original TemplateRow for list views if needed
-struct TemplateRow: View {
-    let template: Template
-    
-    var body: some View {
-        HStack {
-            if let url = template.imageURL {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    ProgressView()
-                        .tint(AppTheme.accentColor)
-                }
-                .frame(width: 80, height: 80)
-                .cornerRadius(AppTheme.cornerRadius)
-                .shadow(color: AppTheme.shadowColor, radius: 3, x: 0, y: 2)
-            } else {
-                ZStack {
-                    RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
-                        .fill(AppTheme.cardBackground)
-                        .frame(width: 80, height: 80)
-                    
-                    Image(systemName: "person.crop.rectangle.fill")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .foregroundColor(AppTheme.accentColor.opacity(0.5))
-                        .frame(width: 40, height: 40)
-                }
-                .shadow(color: AppTheme.shadowColor, radius: 3, x: 0, y: 2)
-            }
-            
-            VStack(alignment: .leading) {
-                Text("Model")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(hex: "333333"))
-                
-                Text("Category: \(template.category.capitalized)")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "666666"))
-            }
-            .padding(.leading, 8)
-        }
-        .padding(.vertical, 6)
     }
 }
